@@ -6,7 +6,7 @@ services:
     container_name: parcel-tracker
     restart: unless-stopped
     ports:
-      - "3000:3000"
+      - "9001:3000"
     volumes:
       - ./data:/app/data
     environment:

@@ -41,7 +41,7 @@ docker-compose up -d
 ```
 
 The service will:
-- Start the API server on port 3000
+- Start the API server on port 9001
 - Run an initial poll for emails
 - Continue polling every hour (configurable)
 
@@ -49,10 +49,10 @@ The service will:
 
 ```bash
 # Check health
-curl http://localhost:3000/health
+curl http://localhost:9001/health
 
 # List tracked packages
-curl http://localhost:3000/packages
+curl http://localhost:9001/packages
 ```
 
 ## API Endpoints
