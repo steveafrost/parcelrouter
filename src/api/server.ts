@@ -81,8 +81,27 @@ export function createServer(): express.Express {
     res.sendFile(indexPath);
   });
   
-  // Serve static files from public directory
-  app.use(express.static(publicPath));
+  // Serve static files from public directory (disable index to let our route handle /)
+  app.use(express.static(publicPath, { index: false }));
+
+  // Debug: log all registered routes
+  console.log('Registered routes:');
+  app._router.stack.forEach((r: any) => {
+    if (r.route && r.route.path) {
+      console.log(`  ${Object.keys(r.route.methods).join(',').toUpperCase()} ${r.route.path}`);
+    }
+  });
+
+  // Catch-all for debugging
+  app.use((req, res) => {
+    console.log(`Unmatched request: ${req.method} ${req.path}`);
+    res.status(404).json({ 
+      error: 'Not found',
+      path: req.path,
+      method: req.method,
+      availableRoutes: ['/health', '/packages', '/']
+    });
+  });
 
   return app;
 }
