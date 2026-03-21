@@ -9,10 +9,20 @@ export function createServer(): express.Express {
   
   app.use(express.json());
   
-  // Determine public path based on environment
-  const publicPath = process.env.NODE_ENV === 'production' 
-    ? path.join(__dirname, '../public')
-    : path.join(__dirname, '../../public');
+  // Determine public path - try multiple locations
+  const possiblePublicPaths = [
+    path.join(__dirname, '../../public'),      // Local dev
+    path.join(__dirname, '../public'),         // Docker alternative
+    path.join(process.cwd(), 'public'),        // Docker: /app/public
+  ];
+  
+  let publicPath = possiblePublicPaths[0];
+  for (const p of possiblePublicPaths) {
+    if (fs.existsSync(p)) {
+      publicPath = p;
+      break;
+    }
+  }
   
   console.log('Public path:', publicPath);
   console.log('Public folder exists:', fs.existsSync(publicPath));
