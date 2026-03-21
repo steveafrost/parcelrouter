@@ -29,14 +29,11 @@ CREATE TABLE IF NOT EXISTS tracking_events (
 
 CREATE INDEX IF NOT EXISTS idx_package_id ON tracking_events(package_id);
 
--- Last poll timestamp
+-- Last poll timestamp per folder
 CREATE TABLE IF NOT EXISTS last_poll (
-  id INTEGER PRIMARY KEY CHECK (id = 1),
+  folder TEXT PRIMARY KEY,
   timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
 );
-
--- Insert initial row
-INSERT OR IGNORE INTO last_poll (id, timestamp) VALUES (1, '1970-01-01');
 
 -- Stats tracking
 CREATE TABLE IF NOT EXISTS stats (

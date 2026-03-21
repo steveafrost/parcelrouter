@@ -20,6 +20,9 @@ function validateEnv(): void {
 async function main(): Promise<void> {
   validateEnv();
 
+  // Archive min date: March 15, 2026
+  const archiveMinDate = new Date('2026-03-15T00:00:00Z');
+
   const config: PollerConfig = {
     imap: {
       host: process.env.IMAP_HOST || 'imap.mail.me.com',
@@ -29,6 +32,10 @@ async function main(): Promise<void> {
     },
     parcelApiKey: process.env.PARCEL_API_KEY!,
     pollIntervalMinutes: parseInt(process.env.POLL_INTERVAL || '3600', 10) / 60,
+    folders: [
+      { name: 'INBOX' },
+      { name: 'Archive', minDate: archiveMinDate },
+    ],
   };
 
   // Start the scheduler

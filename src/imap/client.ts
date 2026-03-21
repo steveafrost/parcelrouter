@@ -29,7 +29,13 @@ export class ImapClient {
     };
 
     this.connection = await imaps.connect(config);
-    await this.connection.openBox('INBOX');
+  }
+
+  async openFolder(folderName: string = 'INBOX'): Promise<void> {
+    if (!this.connection) {
+      throw new Error('Not connected to IMAP server');
+    }
+    await this.connection.openBox(folderName);
   }
 
   async disconnect(): Promise<void> {
