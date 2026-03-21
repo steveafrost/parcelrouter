@@ -23,34 +23,6 @@ function findSchemaFile(): string {
   throw new Error(`Could not find schema.sql. Tried: ${possiblePaths.join(', ')}`);
 }
 
-function migrateLastPollTable(db: Database): void {
-  // Check if old last_poll table exists with 'id' column
-  const oldTableInfo = db.prepare("PRAGMA table_info(last_poll)").all() as { name: string }[];
-  const hasOldSchema = oldTableInfo.some(col => col.name === 'id');
-  
-  if (hasOldSchema && oldTableInfo.length > 0) {
-    console.log('Migrating last_poll table from old schema to new schema...');
-    
-    // Get the old timestamp
-    const oldRow = db.prepare('SELECT timestamp FROM last_poll WHERE id = 1').get() as { timestamp: string } | undefined;
-    const oldTimestamp = oldRow?.timestamp || '1970-01-01';
-    
-    // Drop old table and create new one
-    db.exec('DROP TABLE last_poll');
-    db.exec(`
-      CREATE TABLE last_poll (
-        folder TEXT PRIMARY KEY,
-        timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
-      )
-    `);
-    
-    // Migrate INBOX data
-    db.prepare('INSERT INTO last_poll (folder, timestamp) VALUES (?, ?)').run('INBOX', oldTimestamp);
-    
-    console.log('Migration complete: last_poll table now uses folder-based tracking');
-  }
-}
-
 export function initDb(path: string = './data/tracker.db'): Database {
   if (db) return db;
   
@@ -70,9 +42,6 @@ export function initDb(path: string = './data/tracker.db'): Database {
   const schemaPath = findSchemaFile();
   const schema = readFileSync(schemaPath, 'utf-8');
   db.exec(schema);
-  
-  // Run migrations
-  migrateLastPollTable(db);
   
   return db;
 }
