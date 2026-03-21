@@ -9,7 +9,12 @@ export function createServer(): express.Express {
   app.use(express.json());
   
   // Serve static files from public directory
-  app.use(express.static(path.join(__dirname, '../../public')));
+  // In Docker: /app/dist -> /app/public
+  // Locally: src/api -> public
+  const publicPath = process.env.NODE_ENV === 'production' 
+    ? path.join(__dirname, '../public')
+    : path.join(__dirname, '../../public');
+  app.use(express.static(publicPath));
 
   // Health check
   app.get('/health', (req, res) => {
@@ -46,8 +51,11 @@ export function createServer(): express.Express {
   });
 
   // Serve dashboard for root route
+  const indexPath = process.env.NODE_ENV === 'production'
+    ? path.join(__dirname, '../public/index.html')
+    : path.join(__dirname, '../../public/index.html');
   app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, '../../public/index.html'));
+    res.sendFile(indexPath);
   });
 
   return app;
