@@ -83,6 +83,11 @@ export class PackageRepository {
     return rows.map(r => this.mapRow(r));
   }
 
+  delete(id: string): boolean {
+    const result = this.db.prepare('DELETE FROM tracked_packages WHERE id = ?').run(id);
+    return result.changes > 0;
+  }
+
   private mapRow(row: any): Package {
     return {
       id: row.id,

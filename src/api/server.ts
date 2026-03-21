@@ -76,6 +76,35 @@ export function createServer(): express.Express {
       res.status(500).json({ error: 'Failed to fetch package' });
     }
   });
+
+  // Delete package
+  app.delete('/packages/:id', (req, res) => {
+    try {
+      const db = getDb();
+      const repo = new PackageRepository(db);
+      
+      // Check if package exists
+      const pkg = repo.findById(req.params.id);
+      if (!pkg) {
+        return res.status(404).json({ error: 'Package not found' });
+      }
+      
+      // Delete from database
+      const deleted = repo.delete(req.params.id);
+      
+      if (deleted) {
+        res.json({ 
+          success: true, 
+          message: 'Package removed from tracker',
+          note: 'Please manually remove from Parcel app if needed'
+        });
+      } else {
+        res.status(500).json({ error: 'Failed to delete package' });
+      }
+    } catch (error) {
+      res.status(500).json({ error: 'Failed to delete package' });
+    }
+  });
   
   // Serve dashboard for root route - MUST be before static middleware
   app.get('/', (req, res) => {

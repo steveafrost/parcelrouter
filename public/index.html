@@ -473,6 +473,61 @@
             font-weight: 500;
         }
 
+        .package-actions {
+            margin-top: 20px;
+            padding-top: 16px;
+            border-top: 1px dashed var(--tape);
+            display: flex;
+            justify-content: flex-end;
+        }
+
+        .delete-btn {
+            background: transparent;
+            color: var(--stamp-red);
+            border: 1px solid var(--stamp-red);
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-family: inherit;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .delete-btn:hover {
+            background: var(--stamp-red);
+            color: white;
+        }
+
+        .delete-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .success-message {
+            background: rgba(45, 80, 22, 0.08);
+            border: 1px solid rgba(45, 80, 22, 0.3);
+            color: var(--success);
+            padding: 16px 24px;
+            border-radius: 12px;
+            margin-bottom: 24px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-weight: 500;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
         /* Empty State */
         .empty-state {
             text-align: center;
@@ -799,8 +854,55 @@
                         <div class="field-value">${escapeHtml(pkg.orderNumber)}</div>
                     </div>
                     ` : ''}
+
+                    <div class="package-actions">
+                        <button class="delete-btn" onclick="deletePackage('${pkg.id}', this)" title="Remove from tracker">
+                            🗑 Delete
+                        </button>
+                    </div>
                 </div>
             `).join('');
+        }
+
+        async function deletePackage(id, btn) {
+            if (!confirm('Are you sure you want to remove this package from the tracker?\n\nNote: This will not remove it from the Parcel app - you\'ll need to do that manually.')) {
+                return;
+            }
+
+            btn.disabled = true;
+            btn.textContent = 'Deleting...';
+
+            try {
+                const response = await fetch(`/packages/${id}`, {
+                    method: 'DELETE'
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    showSuccess(data.message + '. ' + data.note);
+                    // Reload packages to refresh the list
+                    await loadPackages();
+                } else {
+                    const error = await response.json();
+                    showError(error.error || 'Failed to delete package');
+                }
+            } catch (error) {
+                console.error('Failed to delete package:', error);
+                showError('Failed to delete package. Please try again.');
+            }
+        }
+
+        function showSuccess(message) {
+            document.getElementById('errorContainer').innerHTML = `
+                <div class="success-message">
+                    <span>✓</span>
+                    <span>${escapeHtml(message)}</span>
+                </div>
+            `;
+            // Clear success message after 5 seconds
+            setTimeout(() => {
+                document.getElementById('errorContainer').innerHTML = '';
+            }, 5000);
         }
 
         function showError(message) {
