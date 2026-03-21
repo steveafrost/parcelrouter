@@ -37,3 +37,14 @@ CREATE TABLE IF NOT EXISTS last_poll (
 
 -- Insert initial row
 INSERT OR IGNORE INTO last_poll (id, timestamp) VALUES (1, '1970-01-01');
+
+-- Stats tracking
+CREATE TABLE IF NOT EXISTS stats (
+  id INTEGER PRIMARY KEY CHECK (id = 1),
+  emails_read INTEGER DEFAULT 0,
+  packages_created INTEGER DEFAULT 0,
+  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Insert initial stats row
+INSERT OR IGNORE INTO stats (id, emails_read, packages_created) VALUES (1, 0, 0);

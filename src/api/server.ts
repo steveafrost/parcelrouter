@@ -3,6 +3,7 @@ import path from 'path';
 import fs from 'fs';
 import { getDb, initDb } from '../db/connection';
 import { PackageRepository } from '../db/repositories/package-repository';
+import { StatsRepository } from '../db/repositories/stats-repository';
 
 export function createServer(): express.Express {
   const app = express();
@@ -35,6 +36,18 @@ export function createServer(): express.Express {
     res.json({ status: 'ok', timestamp: new Date().toISOString() });
   });
   
+  // Get stats
+  app.get('/stats', (req, res) => {
+    try {
+      const db = getDb();
+      const repo = new StatsRepository(db);
+      const stats = repo.getStats();
+      res.json(stats);
+    } catch (error) {
+      res.status(500).json({ error: 'Failed to fetch stats' });
+    }
+  });
+
   // List all tracked packages
   app.get('/packages', (req, res) => {
     try {

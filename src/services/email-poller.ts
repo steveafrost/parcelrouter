@@ -1,6 +1,7 @@
 import { ImapClient, ImapConfig } from '../imap/client';
 import { parseEmail } from '../parser/email-parser';
 import { PackageRepository } from '../db/repositories/package-repository';
+import { StatsRepository } from '../db/repositories/stats-repository';
 import { ParcelClient } from '../parcel/client';
 import { getDb, initDb } from '../db/connection';
 
@@ -14,6 +15,7 @@ export class EmailPoller {
   private imapClient: ImapClient;
   private parcelClient: ParcelClient;
   private packageRepo: PackageRepository;
+  private statsRepo: StatsRepository;
 
   constructor(private config: PollerConfig) {
     this.imapClient = new ImapClient(config.imap);
@@ -22,6 +24,7 @@ export class EmailPoller {
     // Initialize database
     const db = initDb();
     this.packageRepo = new PackageRepository(db);
+    this.statsRepo = new StatsRepository(db);
   }
 
   async poll(): Promise<number> {
@@ -38,6 +41,9 @@ export class EmailPoller {
       // Fetch emails since last poll
       const emails = await this.imapClient.fetchEmails(lastPoll);
       console.log(`Found ${emails.length} emails to process`);
+
+      // Track total emails read
+      this.statsRepo.incrementEmailsRead(emails.length);
 
       let processedCount = 0;
 
@@ -91,6 +97,9 @@ export class EmailPoller {
           }
 
           processedCount++;
+
+          // Track package created
+          this.statsRepo.incrementPackagesCreated();
         } catch (emailError) {
           console.error(`Error processing email ${email.messageId}: ${emailError}`);
           // Continue with next email
