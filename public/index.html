@@ -427,6 +427,89 @@
             box-shadow: 0 2px 4px rgba(30, 58, 138, 0.3);
         }
 
+        .confidence-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            padding: 4px 10px;
+            border-radius: 100px;
+            border: 1px solid;
+        }
+
+        .confidence-high {
+            background: rgba(45, 80, 22, 0.1);
+            color: var(--success);
+            border-color: rgba(45, 80, 22, 0.3);
+        }
+
+        .confidence-medium {
+            background: rgba(217, 119, 6, 0.1);
+            color: var(--warning);
+            border-color: rgba(217, 119, 6, 0.3);
+        }
+
+        .confidence-low {
+            background: rgba(196, 30, 58, 0.15);
+            color: var(--stamp-red);
+            border-color: rgba(196, 30, 58, 0.5);
+            animation: pulse-warning 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse-warning {
+            0%, 100% { 
+                background: rgba(196, 30, 58, 0.15);
+                box-shadow: 0 0 0 0 rgba(196, 30, 58, 0.2);
+            }
+            50% { 
+                background: rgba(196, 30, 58, 0.25);
+                box-shadow: 0 0 0 4px rgba(196, 30, 58, 0);
+            }
+        }
+
+        .confidence-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: currentColor;
+        }
+
+        /* Low confidence package card styling */
+        .package-card.low-confidence {
+            border: 2px solid var(--stamp-red);
+            background: linear-gradient(135deg, var(--paper-white) 0%, rgba(196, 30, 58, 0.05) 100%);
+        }
+
+        .package-card.low-confidence::before {
+            content: '⚠️ REVIEW';
+            position: absolute;
+            top: -1px;
+            right: 20px;
+            background: var(--stamp-red);
+            color: white;
+            font-size: 10px;
+            font-weight: 700;
+            padding: 4px 12px;
+            border-radius: 0 0 4px 4px;
+            letter-spacing: 1px;
+        }
+
+        .low-confidence-banner {
+            background: rgba(196, 30, 58, 0.1);
+            border: 1px dashed var(--stamp-red);
+            border-radius: 8px;
+            padding: 12px 16px;
+            margin: 16px 0;
+            font-size: 13px;
+            color: var(--stamp-red);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
         .package-date {
             font-size: 12px;
             color: var(--ink-light);
@@ -824,12 +907,21 @@
                 return;
             }
 
-            grid.innerHTML = packages.map(pkg => `
-                <div class="package-card">
+            grid.innerHTML = packages.map(pkg => {
+                const isLowConfidence = pkg.confidence === 'low';
+                return `
+                <div class="package-card ${isLowConfidence ? 'low-confidence' : ''}">
                     <div class="package-header">
                         <span class="carrier-badge">${escapeHtml(pkg.carrier)}</span>
                         <span class="package-date">${new Date(pkg.createdAt).toLocaleDateString()}</span>
                     </div>
+
+                    ${isLowConfidence ? `
+                    <div class="low-confidence-banner">
+                        <span>⚠️</span>
+                        <span>This may not be a valid tracking number. Please verify before checking Parcel.</span>
+                    </div>
+                    ` : ''}
 
                     <div class="package-field">
                         <div class="field-label">Description</div>
@@ -839,6 +931,16 @@
                     <div class="package-field">
                         <div class="field-label">Tracking Number</div>
                         <div class="field-value tracking-number">${escapeHtml(pkg.trackingNumber)}</div>
+                    </div>
+
+                    <div class="package-field">
+                        <div class="field-label">Confidence</div>
+                        <div class="field-value">
+                            <span class="confidence-indicator confidence-${pkg.confidence || 'medium'}">
+                                <span class="confidence-dot"></span>
+                                ${pkg.confidence === 'high' ? 'High' : pkg.confidence === 'low' ? 'Low - Review Needed' : 'Medium'}
+                            </span>
+                        </div>
                     </div>
 
                     ${pkg.retailer ? `
@@ -854,14 +956,8 @@
                         <div class="field-value">${escapeHtml(pkg.orderNumber)}</div>
                     </div>
                     ` : ''}
-
-                    <div class="package-actions">
-                        <button class="delete-btn" onclick="deletePackage('${pkg.id}', this)" title="Remove from tracker">
-                            🗑 Delete
-                        </button>
-                    </div>
                 </div>
-            `).join('');
+            `}).join('');
         }
 
         async function deletePackage(id, btn) {

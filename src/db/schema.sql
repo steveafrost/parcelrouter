@@ -8,6 +8,7 @@ CREATE TABLE IF NOT EXISTS tracked_packages (
   order_number TEXT,
   email_message_id TEXT UNIQUE,
   parcel_package_id TEXT,
+  confidence TEXT DEFAULT 'medium',
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
   updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );

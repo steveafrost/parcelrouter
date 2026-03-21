@@ -1,4 +1,4 @@
-import { extractTrackingNumber, detectCarrier, detectCarrierFromSender } from './tracking-patterns';
+import { extractTrackingNumberWithConfidence, extractTrackingNumber, detectCarrier, detectCarrierFromSender, ConfidenceLevel } from './tracking-patterns';
 
 export interface ParsedEmail {
   messageId: string;
@@ -15,6 +15,7 @@ export interface TrackingInfo {
   retailer: string | null;
   productName: string;
   orderNumber: string | null;
+  confidence: ConfidenceLevel;
 }
 
 // Keywords that suggest a shipping email
@@ -55,14 +56,16 @@ export function parseEmail(email: ParsedEmail): TrackingInfo | null {
 
   // Try to extract tracking number from subject and body
   const searchText = `${email.subject} ${email.body}`;
-  const trackingNumber = extractTrackingNumber(searchText);
+  const trackingResult = extractTrackingNumberWithConfidence(searchText);
   
-  if (!trackingNumber) {
+  if (!trackingResult) {
     return null;
   }
 
+  const { number: trackingNumber, carrier: detectedCarrier, confidence } = trackingResult;
+
   // Detect carrier from tracking number
-  let carrier = detectCarrier(trackingNumber);
+  let carrier = detectedCarrier;
   
   // If unknown, try from sender
   if (carrier === 'Unknown') {
@@ -88,6 +91,7 @@ export function parseEmail(email: ParsedEmail): TrackingInfo | null {
     retailer,
     productName: senderName,
     orderNumber,
+    confidence,
   };
 }
 

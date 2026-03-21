@@ -118,6 +118,7 @@ export class EmailPoller {
           productName: trackingInfo.productName,
           orderNumber: trackingInfo.orderNumber || undefined,
           emailMessageId: trackingInfo.messageId,
+          confidence: trackingInfo.confidence,
         });
 
         console.log(`Created package: ${pkg.id} for tracking ${pkg.trackingNumber}`);

@@ -10,6 +10,7 @@ export interface Package {
   orderNumber?: string;
   emailMessageId?: string;
   parcelPackageId?: string;
+  confidence?: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -22,6 +23,7 @@ export interface CreatePackageInput {
   orderNumber?: string;
   emailMessageId?: string;
   parcelPackageId?: string;
+  confidence?: string;
 }
 
 export class PackageRepository {
@@ -33,8 +35,8 @@ export class PackageRepository {
 
     const stmt = this.db.prepare(`
       INSERT INTO tracked_packages 
-      (id, tracking_number, carrier, retailer, product_name, order_number, email_message_id, parcel_package_id, created_at, updated_at)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      (id, tracking_number, carrier, retailer, product_name, order_number, email_message_id, parcel_package_id, confidence, created_at, updated_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `);
 
     stmt.run(
@@ -46,6 +48,7 @@ export class PackageRepository {
       input.orderNumber || null,
       input.emailMessageId || null,
       input.parcelPackageId || null,
+      input.confidence || 'medium',
       now,
       now
     );
@@ -98,6 +101,7 @@ export class PackageRepository {
       orderNumber: row.order_number,
       emailMessageId: row.email_message_id,
       parcelPackageId: row.parcel_package_id,
+      confidence: row.confidence,
       createdAt: new Date(row.created_at),
       updatedAt: new Date(row.updated_at),
     };
