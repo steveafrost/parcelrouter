@@ -75,6 +75,9 @@ export function parseEmail(email: ParsedEmail): TrackingInfo | null {
   // Extract retailer from sender domain
   const retailer = extractRetailer(email.from);
 
+  // Extract a clean sender name for the product name
+  const senderName = extractSenderName(email.from);
+
   // Try to extract order number from subject
   const orderNumber = extractOrderNumber(email.subject);
 
@@ -83,9 +86,28 @@ export function parseEmail(email: ParsedEmail): TrackingInfo | null {
     trackingNumber,
     carrier,
     retailer,
-    productName: email.subject,
+    productName: senderName,
     orderNumber,
   };
+}
+
+function extractSenderName(from: string): string {
+  // Handle "Name <email@domain.com>" format
+  const nameMatch = from.match(/^"?([^"<]+)"?\s*</);
+  if (nameMatch) {
+    return nameMatch[1].trim();
+  }
+  
+  // If no display name, extract domain from email
+  const emailMatch = from.match(/@([^>]+)/);
+  if (emailMatch) {
+    const domain = emailMatch[1];
+    // Capitalize first letter of domain
+    return domain.charAt(0).toUpperCase() + domain.slice(1);
+  }
+  
+  // Fallback to the full from string
+  return from;
 }
 
 function extractRetailer(from: string): string | null {

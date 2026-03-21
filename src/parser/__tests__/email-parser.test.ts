@@ -33,7 +33,7 @@ describe('Email Parser', () => {
       expect(result?.trackingNumber).toBe('TBA123456789012');
       expect(result?.carrier).toBe('Amazon');
       expect(result?.retailer).toBe('Amazon');
-      expect(result?.productName).toBe('Your Amazon.com order has shipped (#112-1234567-1234567)');
+      expect(result?.productName).toBe('Amazon.com');
     });
 
     test('parses UPS shipping email', () => {
