@@ -1,9 +1,27 @@
 import DatabaseConstructor from 'better-sqlite3';
 import type { Database } from 'better-sqlite3';
-import { readFileSync } from 'fs';
+import { readFileSync, existsSync } from 'fs';
 import { join } from 'path';
 
 let db: Database | null = null;
+
+function findSchemaFile(): string {
+  // Try multiple locations for schema.sql
+  const possiblePaths = [
+    join(__dirname, 'schema.sql'),              // Local dev: src/db/schema.sql
+    join(__dirname, '../src/db/schema.sql'),    // Docker: dist/../src/db/schema.sql
+    join(process.cwd(), 'src/db/schema.sql'),   // Fallback to cwd
+    join(process.cwd(), 'db/schema.sql'),       // Alternative structure
+  ];
+  
+  for (const schemaPath of possiblePaths) {
+    if (existsSync(schemaPath)) {
+      return schemaPath;
+    }
+  }
+  
+  throw new Error(`Could not find schema.sql. Tried: ${possiblePaths.join(', ')}`);
+}
 
 export function initDb(path: string = './data/tracker.db'): Database {
   if (db) return db;
@@ -21,7 +39,8 @@ export function initDb(path: string = './data/tracker.db'): Database {
   db.pragma('journal_mode = WAL');
   
   // Run schema
-  const schema = readFileSync(join(__dirname, 'schema.sql'), 'utf-8');
+  const schemaPath = findSchemaFile();
+  const schema = readFileSync(schemaPath, 'utf-8');
   db.exec(schema);
   
   return db;
