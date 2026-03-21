@@ -1,4 +1,5 @@
 import express from 'express';
+import path from 'path';
 import { getDb, initDb } from '../db/connection';
 import { PackageRepository } from '../db/repositories/package-repository';
 
@@ -6,6 +7,9 @@ export function createServer(): express.Express {
   const app = express();
   
   app.use(express.json());
+  
+  // Serve static files from public directory
+  app.use(express.static(path.join(__dirname, '../../public')));
 
   // Health check
   app.get('/health', (req, res) => {
@@ -39,6 +43,11 @@ export function createServer(): express.Express {
     } catch (error) {
       res.status(500).json({ error: 'Failed to fetch package' });
     }
+  });
+
+  // Serve dashboard for root route
+  app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, '../../public/index.html'));
   });
 
   return app;

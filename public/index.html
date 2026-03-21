@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Parcel Tracker</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: #f5f5f5;
+            color: #333;
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        header {
+            background: #2c3e50;
+            color: white;
+            padding: 20px 0;
+            margin-bottom: 30px;
+        }
+        
+        header h1 {
+            font-size: 28px;
+            font-weight: 600;
+        }
+        
+        .status-bar {
+            background: white;
+            border-radius: 8px;
+            padding: 15px 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .status-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #e74c3c;
+            transition: background 0.3s;
+        }
+        
+        .status-indicator.online {
+            background: #27ae60;
+        }
+        
+        .status-text {
+            font-weight: 500;
+        }
+        
+        .last-updated {
+            margin-left: auto;
+            color: #7f8c8d;
+            font-size: 14px;
+        }
+        
+        .packages-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 20px;
+        }
+        
+        .package-card {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        
+        .package-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        
+        .package-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #ecf0f1;
+        }
+        
+        .carrier-badge {
+            background: #3498db;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        
+        .package-info {
+            margin-bottom: 10px;
+        }
+        
+        .package-info label {
+            display: block;
+            font-size: 12px;
+            color: #7f8c8d;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 4px;
+        }
+        
+        .package-info value {
+            display: block;
+            font-size: 15px;
+            color: #2c3e50;
+            word-break: break-all;
+        }
+        
+        .tracking-number {
+            font-family: 'Courier New', monospace;
+            background: #ecf0f1;
+            padding: 8px 12px;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #7f8c8d;
+        }
+        
+        .empty-state svg {
+            width: 80px;
+            height: 80px;
+            margin-bottom: 20px;
+            opacity: 0.3;
+        }
+        
+        .empty-state h2 {
+            font-size: 24px;
+            margin-bottom: 10px;
+            color: #2c3e50;
+        }
+        
+        .refresh-btn {
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background 0.2s;
+        }
+        
+        .refresh-btn:hover {
+            background: #2980b9;
+        }
+        
+        .refresh-btn:disabled {
+            background: #bdc3c7;
+            cursor: not-allowed;
+        }
+        
+        .error-message {
+            background: #e74c3c;
+            color: white;
+            padding: 15px 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        
+        @media (max-width: 600px) {
+            .packages-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <h1>📦 Parcel Tracker</h1>
+        </div>
+    </header>
+    
+    <div class="container">
+        <div class="status-bar">
+            <div class="status-indicator" id="statusIndicator"></div>
+            <span class="status-text" id="statusText">Connecting...</span>
+            <span class="last-updated" id="lastUpdated"></span>
+            <button class="refresh-btn" id="refreshBtn" onclick="loadPackages()">Refresh</button>
+        </div>
+        
+        <div id="errorContainer"></div>
+        
+        <div class="packages-grid" id="packagesGrid">
+            <!-- Packages will be loaded here -->
+        </div>
+    </div>
+    
+    <script>
+        let autoRefreshInterval;
+        
+        async function checkHealth() {
+            try {
+                const response = await fetch('/health');
+                const data = await response.json();
+                
+                if (response.ok) {
+                    document.getElementById('statusIndicator').classList.add('online');
+                    document.getElementById('statusText').textContent = 'Service Online';
+                    return true;
+                }
+            } catch (error) {
+                console.error('Health check failed:', error);
+            }
+            
+            document.getElementById('statusIndicator').classList.remove('online');
+            document.getElementById('statusText').textContent = 'Service Offline';
+            return false;
+        }
+        
+        async function loadPackages() {
+            const refreshBtn = document.getElementById('refreshBtn');
+            refreshBtn.disabled = true;
+            refreshBtn.textContent = 'Loading...';
+            
+            try {
+                // Check health first
+                const isHealthy = await checkHealth();
+                if (!isHealthy) {
+                    showError('Cannot connect to the service. Please check if the server is running.');
+                    return;
+                }
+                
+                // Load packages
+                const response = await fetch('/packages');
+                if (!response.ok) {
+                    throw new Error('Failed to load packages');
+                }
+                
+                const packages = await response.json();
+                displayPackages(packages);
+                
+                // Update timestamp
+                document.getElementById('lastUpdated').textContent = 
+                    'Last updated: ' + new Date().toLocaleTimeString();
+                
+                // Clear any errors
+                document.getElementById('errorContainer').innerHTML = '';
+                
+            } catch (error) {
+                console.error('Failed to load packages:', error);
+                showError('Failed to load packages. Please try again.');
+            } finally {
+                refreshBtn.disabled = false;
+                refreshBtn.textContent = 'Refresh';
+            }
+        }
+        
+        function displayPackages(packages) {
+            const grid = document.getElementById('packagesGrid');
+            
+            if (packages.length === 0) {
+                grid.innerHTML = `
+                    <div class="empty-state" style="grid-column: 1 / -1;">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>
+                            <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path>
+                        </svg>
+                        <h2>No packages yet</h2>
+                        <p>Packages will appear here when tracking emails are found.</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            grid.innerHTML = packages.map(pkg => `
+                <div class="package-card">
+                    <div class="package-header">
+                        <span class="carrier-badge">${escapeHtml(pkg.carrier)}</span>
+                    </div>
+                    
+                    <div class="package-info">
+                        <label>Product</label>
+                        <value>${escapeHtml(pkg.productName || 'Unknown Product')}</value>
+                    </div>
+                    
+                    <div class="package-info">
+                        <label>Tracking Number</label>
+                        <value class="tracking-number">${escapeHtml(pkg.trackingNumber)}</value>
+                    </div>
+                    
+                    ${pkg.retailer ? `
+                    <div class="package-info">
+                        <label>Retailer</label>
+                        <value>${escapeHtml(pkg.retailer)}</value>
+                    </div>
+                    ` : ''}
+                    
+                    ${pkg.orderNumber ? `
+                    <div class="package-info">
+                        <label>Order Number</label>
+                        <value>${escapeHtml(pkg.orderNumber)}</value>
+                    </div>
+                    ` : ''}
+                    
+                    <div class="package-info">
+                        <label>Added</label>
+                        <value>${new Date(pkg.createdAt).toLocaleString()}</value>
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        function showError(message) {
+            document.getElementById('errorContainer').innerHTML = `
+                <div class="error-message">${escapeHtml(message)}</div>
+            `;
+        }
+        
+        function escapeHtml(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+        
+        function startAutoRefresh() {
+            // Refresh every 30 seconds
+            autoRefreshInterval = setInterval(loadPackages, 30000);
+        }
+        
+        // Load on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            loadPackages();
+            startAutoRefresh();
+        });
+        
+        // Clean up on page unload
+        window.addEventListener('beforeunload', () => {
+            if (autoRefreshInterval) {
+                clearInterval(autoRefreshInterval);
+            }
+        });
+    </script>
+</body>
+</html>

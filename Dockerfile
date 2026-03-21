@@ -35,6 +35,7 @@ RUN npm ci --only=production
 # Copy built application from builder
 COPY --from=builder /app/dist/ ./dist/
 COPY --from=builder /app/src/db/schema.sql ./src/db/schema.sql
+COPY public/ ./public/
 
 # Create data directory
 RUN mkdir -p /app/data
