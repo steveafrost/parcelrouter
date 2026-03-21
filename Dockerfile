@@ -1,6 +1,27 @@
+FROM node:20-alpine AS builder
+
+# Install build dependencies
+RUN apk add --no-cache python3 make g++
+
+WORKDIR /app
+
+# Copy package files
+COPY package*.json ./
+COPY tsconfig.json ./
+
+# Install all dependencies (including dev)
+RUN npm ci
+
+# Copy source code
+COPY src/ ./src/
+
+# Build TypeScript
+RUN npm run build
+
+# Production stage
 FROM node:20-alpine
 
-# Install build dependencies for better-sqlite3
+# Install build dependencies for better-sqlite3 runtime
 RUN apk add --no-cache python3 make g++
 
 WORKDIR /app
@@ -8,12 +29,12 @@ WORKDIR /app
 # Copy package files
 COPY package*.json ./
 
-# Install dependencies
+# Install production dependencies only
 RUN npm ci --only=production
 
-# Copy built application
-COPY dist/ ./dist/
-COPY src/db/schema.sql ./src/db/schema.sql
+# Copy built application from builder
+COPY --from=builder /app/dist/ ./dist/
+COPY --from=builder /app/src/db/schema.sql ./src/db/schema.sql
 
 # Create data directory
 RUN mkdir -p /app/data
