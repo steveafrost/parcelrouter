@@ -13,47 +13,17 @@ A self-hosted package tracking service that automatically reads shipping emails 
 
 ## Quick Start
 
-### 1. Clone and Setup
-
 ```bash
-git clone <your-repo-url>
+git clone https://github.com/steveafrost/parcel-tracker.git
 cd parcel-tracker
 cp .env.example .env
-```
-
-### 2. Configure Environment Variables
-
-Edit `.env` with your credentials:
-
-```bash
-# iCloud Mail (generate app-specific password at appleid.apple.com)
-IMAP_USER=your.email@icloud.com
-IMAP_PASS=xxxx-xxxx-xxxx-xxxx
-
-# Parcel API (get from https://parcel.app/account/api)
-PARCEL_API_KEY=your_api_key_here
-```
-
-### 3. Run with Docker
-
-```bash
+# Edit .env with your credentials, then:
 docker-compose up -d
 ```
 
-The service will:
-- Start the API server on port 9001
-- Run an initial poll for emails
-- Continue polling every hour (configurable)
+Open http://localhost:9001
 
-### 4. Verify it's Working
-
-```bash
-# Check health
-curl http://localhost:9001/health
-
-# List tracked packages
-curl http://localhost:9001/packages
-```
+📖 **For detailed setup instructions**, see [SETUP.md](./SETUP.md)
 
 ## API Endpoints
 
