@@ -6,24 +6,24 @@
     <title>Parcel Tracker</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg-primary: #0a0a0f;
-            --bg-secondary: #12121a;
-            --bg-card: #1a1a25;
-            --accent-cyan: #00d4ff;
-            --accent-purple: #a855f7;
-            --accent-pink: #ec4899;
-            --accent-green: #22c55e;
-            --accent-orange: #f97316;
-            --accent-red: #ef4444;
-            --text-primary: #f8fafc;
-            --text-secondary: #94a3b8;
-            --text-muted: #64748b;
-            --border: rgba(255, 255, 255, 0.1);
-            --glow-cyan: 0 0 20px rgba(0, 212, 255, 0.3);
-            --glow-purple: 0 0 20px rgba(168, 85, 247, 0.3);
+            /* Cardboard box palette */
+            --paper-white: #faf8f5;
+            --paper-cream: #f5f1eb;
+            --cardboard: #c4a77d;
+            --cardboard-dark: #8b7355;
+            --tape: #e8dcc8;
+            --ink: #2d2926;
+            --ink-light: #5c5651;
+            --stamp-red: #c41e3a;
+            --stamp-blue: #1e3a8a;
+            --success: #2d5016;
+            --warning: #d97706;
+            --error: #991b1b;
+            --shadow: rgba(45, 41, 38, 0.08);
+            --shadow-lg: rgba(45, 41, 38, 0.15);
         }
 
         * {
@@ -33,41 +33,26 @@
         }
 
         body {
-            font-family: 'Space Grotesk', sans-serif;
-            background: var(--bg-primary);
-            color: var(--text-primary);
+            font-family: 'DM Sans', sans-serif;
+            background: var(--paper-cream);
+            color: var(--ink);
             min-height: 100vh;
-            overflow-x: hidden;
-        }
-
-        /* Animated background grid */
-        body::before {
-            content: '';
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
             background-image: 
-                linear-gradient(rgba(0, 212, 255, 0.03) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(0, 212, 255, 0.03) 1px, transparent 1px);
-            background-size: 50px 50px;
-            pointer-events: none;
-            z-index: 0;
+                radial-gradient(circle at 100% 0%, rgba(196, 167, 125, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 0% 100%, rgba(196, 167, 125, 0.1) 0%, transparent 50%);
         }
 
         .container {
-            max-width: 1400px;
+            max-width: 1200px;
             margin: 0 auto;
-            padding: 40px 20px;
-            position: relative;
-            z-index: 1;
+            padding: 32px 24px;
         }
 
-        /* Header with glitch effect */
+        /* Header - Package tape style */
         header {
             margin-bottom: 40px;
-            position: relative;
+            padding-bottom: 32px;
+            border-bottom: 3px dashed var(--cardboard);
         }
 
         .header-content {
@@ -75,67 +60,78 @@
             align-items: center;
             justify-content: space-between;
             flex-wrap: wrap;
-            gap: 20px;
+            gap: 24px;
         }
 
         .brand {
             display: flex;
             align-items: center;
-            gap: 16px;
+            gap: 20px;
         }
 
         .logo {
-            width: 60px;
-            height: 60px;
-            background: linear-gradient(135deg, var(--accent-cyan), var(--accent-purple));
-            border-radius: 16px;
+            width: 64px;
+            height: 64px;
+            background: var(--cardboard);
+            border-radius: 12px;
             display: flex;
             align-items: center;
             justify-content: center;
             font-size: 32px;
-            box-shadow: var(--glow-cyan);
-            animation: pulse 2s ease-in-out infinite;
+            box-shadow: 
+                inset 0 2px 4px rgba(255, 255, 255, 0.3),
+                inset 0 -2px 4px rgba(0, 0, 0, 0.1),
+                0 4px 12px var(--shadow);
+            position: relative;
         }
 
-        @keyframes pulse {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.05); }
+        .logo::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 40px;
+            height: 8px;
+            background: var(--tape);
+            border-radius: 2px;
         }
 
         h1 {
-            font-size: 42px;
+            font-size: 36px;
             font-weight: 700;
-            letter-spacing: -1px;
-            background: linear-gradient(135deg, var(--text-primary), var(--accent-cyan));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
+            color: var(--ink);
+            letter-spacing: -0.5px;
         }
 
         .subtitle {
-            color: var(--text-secondary);
-            font-size: 14px;
+            color: var(--ink-light);
+            font-size: 15px;
             margin-top: 4px;
-            text-transform: uppercase;
-            letter-spacing: 2px;
+            font-weight: 500;
         }
 
-        /* Status Dashboard */
+        /* Stats Dashboard */
         .dashboard {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
             gap: 24px;
             margin-bottom: 40px;
         }
 
         .card {
-            background: var(--bg-card);
-            border: 1px solid var(--border);
-            border-radius: 20px;
+            background: var(--paper-white);
+            border-radius: 16px;
             padding: 28px;
+            box-shadow: 0 2px 8px var(--shadow), 0 8px 24px var(--shadow-lg);
+            border: 1px solid rgba(196, 167, 125, 0.3);
             position: relative;
-            overflow: hidden;
             transition: all 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 16px var(--shadow), 0 12px 32px var(--shadow-lg);
         }
 
         .card::before {
@@ -144,131 +140,132 @@
             top: 0;
             left: 0;
             right: 0;
-            height: 1px;
-            background: linear-gradient(90deg, transparent, var(--accent-cyan), transparent);
-            opacity: 0;
-            transition: opacity 0.3s;
+            height: 4px;
+            background: var(--cardboard);
+            border-radius: 16px 16px 0 0;
         }
 
-        .card:hover::before {
-            opacity: 1;
-        }
-
-        .card:hover {
-            transform: translateY(-4px);
-            border-color: rgba(0, 212, 255, 0.3);
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
-        }
+        .card.status-card::before { background: var(--success); }
+        .card.email-card::before { background: var(--stamp-blue); }
+        .card.package-card::before { background: var(--cardboard-dark); }
+        .card.api-card::before { background: var(--stamp-red); }
 
         .card-header {
             display: flex;
             align-items: center;
             gap: 12px;
-            margin-bottom: 20px;
+            margin-bottom: 16px;
         }
 
         .card-icon {
-            width: 44px;
-            height: 44px;
-            border-radius: 12px;
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 22px;
-        }
-
-        .card-icon.status {
-            background: rgba(34, 197, 94, 0.1);
-            color: var(--accent-green);
-        }
-
-        .card-icon.status.offline {
-            background: rgba(239, 68, 68, 0.1);
-            color: var(--accent-red);
-        }
-
-        .card-icon.emails {
-            background: rgba(0, 212, 255, 0.1);
-            color: var(--accent-cyan);
-        }
-
-        .card-icon.packages {
-            background: rgba(168, 85, 247, 0.1);
-            color: var(--accent-purple);
-        }
-
-        .card-icon.api {
-            background: rgba(249, 115, 22, 0.1);
-            color: var(--accent-orange);
+            font-size: 20px;
+            background: var(--paper-cream);
+            border: 1px solid var(--tape);
         }
 
         .card-label {
             font-size: 13px;
-            color: var(--text-muted);
+            color: var(--ink-light);
             text-transform: uppercase;
             letter-spacing: 1.5px;
             font-weight: 600;
         }
 
         .card-value {
-            font-size: 48px;
+            font-size: 40px;
             font-weight: 700;
-            color: var(--text-primary);
-            margin-top: 8px;
-            font-family: 'JetBrains Mono', monospace;
+            color: var(--ink);
+            font-family: 'DM Mono', monospace;
         }
 
         .card-value.small {
-            font-size: 32px;
+            font-size: 28px;
         }
 
-        .status-text {
-            font-size: 18px;
-            color: var(--accent-green);
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            border-radius: 100px;
+            font-size: 14px;
             font-weight: 600;
+            margin-top: 8px;
         }
 
-        .status-text.offline {
-            color: var(--accent-red);
+        .status-badge.online {
+            background: rgba(45, 80, 22, 0.1);
+            color: var(--success);
         }
 
-        .last-update {
-            font-size: 12px;
-            color: var(--text-muted);
-            margin-top: 12px;
+        .status-badge.offline {
+            background: rgba(153, 27, 27, 0.1);
+            color: var(--error);
         }
 
-        /* Rate Limit Warning */
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: currentColor;
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        /* Rate Limit Warning - Stamp style */
         .rate-limit {
             grid-column: 1 / -1;
-            background: linear-gradient(135deg, rgba(239, 68, 68, 0.1), rgba(249, 115, 22, 0.1));
-            border: 1px solid rgba(239, 68, 68, 0.3);
-            border-radius: 16px;
-            padding: 20px 28px;
+            background: var(--paper-white);
+            border: 2px solid var(--stamp-red);
+            border-radius: 8px;
+            padding: 24px 28px;
             display: flex;
-            align-items: center;
-            gap: 16px;
-            animation: slideIn 0.5s ease;
+            align-items: flex-start;
+            gap: 20px;
+            position: relative;
+            box-shadow: 0 4px 16px rgba(196, 30, 58, 0.15);
         }
 
         .rate-limit.warning {
-            background: linear-gradient(135deg, rgba(249, 115, 22, 0.1), rgba(234, 179, 8, 0.1));
-            border-color: rgba(249, 115, 22, 0.3);
+            border-color: var(--warning);
+            box-shadow: 0 4px 16px rgba(217, 119, 6, 0.15);
         }
 
-        @keyframes slideIn {
-            from {
-                opacity: 0;
-                transform: translateY(-20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
+        .rate-limit::before {
+            content: 'URGENT';
+            position: absolute;
+            top: 8px;
+            right: 16px;
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--stamp-red);
+            letter-spacing: 2px;
+            border: 2px solid var(--stamp-red);
+            padding: 2px 8px;
+            border-radius: 4px;
+            transform: rotate(-5deg);
+            opacity: 0.6;
+        }
+
+        .rate-limit.warning::before {
+            content: 'NOTICE';
+            color: var(--warning);
+            border-color: var(--warning);
         }
 
         .rate-limit-icon {
-            font-size: 28px;
+            font-size: 32px;
+            flex-shrink: 0;
         }
 
         .rate-limit-content {
@@ -276,30 +273,38 @@
         }
 
         .rate-limit-title {
-            font-weight: 600;
+            font-weight: 700;
             font-size: 16px;
-            margin-bottom: 4px;
+            margin-bottom: 6px;
+            color: var(--stamp-red);
+        }
+
+        .rate-limit.warning .rate-limit-title {
+            color: var(--warning);
         }
 
         .rate-limit-text {
-            color: var(--text-secondary);
+            color: var(--ink-light);
             font-size: 14px;
+            line-height: 1.5;
         }
 
         .rate-limit-bar {
-            width: 200px;
-            height: 6px;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 3px;
+            width: 100%;
+            max-width: 300px;
+            height: 8px;
+            background: var(--paper-cream);
+            border-radius: 4px;
             overflow: hidden;
-            margin-top: 8px;
+            margin-top: 12px;
+            border: 1px solid var(--tape);
         }
 
         .rate-limit-fill {
             height: 100%;
-            background: linear-gradient(90deg, var(--accent-green), var(--accent-orange), var(--accent-red));
             border-radius: 3px;
             transition: width 0.3s ease;
+            background: linear-gradient(90deg, var(--success) 0%, var(--warning) 70%, var(--stamp-red) 100%);
         }
 
         /* Section Header */
@@ -308,31 +313,26 @@
             align-items: center;
             justify-content: space-between;
             margin-bottom: 24px;
+            padding-bottom: 16px;
+            border-bottom: 2px solid var(--tape);
         }
 
         .section-title {
-            font-size: 24px;
-            font-weight: 600;
+            font-size: 22px;
+            font-weight: 700;
             display: flex;
             align-items: center;
             gap: 12px;
+            color: var(--ink);
         }
 
-        .section-title::before {
-            content: '';
-            width: 4px;
-            height: 28px;
-            background: linear-gradient(180deg, var(--accent-cyan), var(--accent-purple));
-            border-radius: 2px;
-        }
-
-        /* Refresh Button */
+        /* Refresh Button - Stamp style */
         .refresh-btn {
-            background: linear-gradient(135deg, var(--accent-cyan), var(--accent-purple));
-            color: white;
+            background: var(--cardboard);
+            color: var(--paper-white);
             border: none;
             padding: 12px 24px;
-            border-radius: 12px;
+            border-radius: 8px;
             font-family: inherit;
             font-weight: 600;
             font-size: 14px;
@@ -340,17 +340,20 @@
             display: flex;
             align-items: center;
             gap: 8px;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 15px rgba(0, 212, 255, 0.3);
+            transition: all 0.2s ease;
+            box-shadow: 0 2px 8px var(--shadow);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
 
         .refresh-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(0, 212, 255, 0.4);
+            background: var(--cardboard-dark);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px var(--shadow-lg);
         }
 
         .refresh-btn:disabled {
-            opacity: 0.5;
+            opacity: 0.6;
             cursor: not-allowed;
             transform: none;
         }
@@ -364,69 +367,73 @@
             to { transform: rotate(360deg); }
         }
 
-        /* Packages Grid */
+        /* Package Cards - Shipping label style */
         .packages-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+            grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
             gap: 24px;
         }
 
         .package-card {
-            background: var(--bg-card);
-            border: 1px solid var(--border);
-            border-radius: 20px;
-            padding: 28px;
+            background: var(--paper-white);
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 2px 8px var(--shadow);
+            border: 1px solid var(--tape);
             position: relative;
-            overflow: hidden;
-            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-
-        .package-card::after {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: linear-gradient(135deg, rgba(0, 212, 255, 0.1), rgba(168, 85, 247, 0.1));
-            opacity: 0;
-            transition: opacity 0.3s;
-            pointer-events: none;
-        }
-
-        .package-card:hover::after {
-            opacity: 1;
+            transition: all 0.3s ease;
         }
 
         .package-card:hover {
-            transform: translateY(-8px) scale(1.02);
-            border-color: rgba(0, 212, 255, 0.4);
-            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5), var(--glow-cyan);
+            transform: translateY(-4px);
+            box-shadow: 0 8px 24px var(--shadow-lg);
+            border-color: var(--cardboard);
+        }
+
+        .package-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 20px;
+            right: 20px;
+            height: 8px;
+            background: repeating-linear-gradient(
+                90deg,
+                var(--cardboard) 0px,
+                var(--cardboard) 4px,
+                transparent 4px,
+                transparent 8px
+            );
+            border-radius: 0 0 4px 4px;
         }
 
         .package-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 24px;
+            margin-bottom: 20px;
+            padding-top: 4px;
         }
 
         .carrier-badge {
-            background: linear-gradient(135deg, rgba(0, 212, 255, 0.2), rgba(168, 85, 247, 0.2));
-            color: var(--accent-cyan);
-            padding: 8px 16px;
-            border-radius: 100px;
+            background: var(--stamp-blue);
+            color: white;
+            padding: 6px 14px;
+            border-radius: 4px;
             font-size: 12px;
             font-weight: 700;
             text-transform: uppercase;
             letter-spacing: 1px;
-            border: 1px solid rgba(0, 212, 255, 0.3);
+            box-shadow: 0 2px 4px rgba(30, 58, 138, 0.3);
         }
 
         .package-date {
             font-size: 12px;
-            color: var(--text-muted);
-            font-family: 'JetBrains Mono', monospace;
+            color: var(--ink-light);
+            font-family: 'DM Mono', monospace;
+            background: var(--paper-cream);
+            padding: 4px 10px;
+            border-radius: 4px;
         }
 
         .package-field {
@@ -439,28 +446,31 @@
 
         .field-label {
             font-size: 11px;
-            color: var(--text-muted);
+            color: var(--ink-light);
             text-transform: uppercase;
             letter-spacing: 1.5px;
-            margin-bottom: 6px;
+            margin-bottom: 4px;
             font-weight: 600;
         }
 
         .field-value {
-            font-size: 16px;
-            color: var(--text-primary);
+            font-size: 15px;
+            color: var(--ink);
             line-height: 1.4;
+            font-weight: 500;
         }
 
         .tracking-number {
-            font-family: 'JetBrains Mono', monospace;
-            background: rgba(0, 212, 255, 0.1);
-            color: var(--accent-cyan);
+            font-family: 'DM Mono', monospace;
+            background: var(--paper-cream);
+            color: var(--stamp-blue);
             padding: 12px 16px;
-            border-radius: 8px;
-            font-size: 15px;
-            letter-spacing: 1px;
-            border: 1px solid rgba(0, 212, 255, 0.2);
+            border-radius: 6px;
+            font-size: 16px;
+            letter-spacing: 0.5px;
+            border: 1px solid var(--tape);
+            display: inline-block;
+            font-weight: 500;
         }
 
         /* Empty State */
@@ -471,34 +481,28 @@
         }
 
         .empty-icon {
-            width: 120px;
-            height: 120px;
+            width: 100px;
+            height: 100px;
             margin: 0 auto 32px;
-            background: linear-gradient(135deg, rgba(0, 212, 255, 0.1), rgba(168, 85, 247, 0.1));
-            border-radius: 50%;
+            background: var(--paper-white);
+            border-radius: 16px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 60px;
-            border: 1px solid var(--border);
-            animation: float 3s ease-in-out infinite;
-        }
-
-        @keyframes float {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-10px); }
+            font-size: 48px;
+            border: 2px dashed var(--cardboard);
+            box-shadow: 0 4px 16px var(--shadow);
         }
 
         .empty-state h2 {
-            font-size: 32px;
+            font-size: 28px;
             margin-bottom: 12px;
-            background: linear-gradient(135deg, var(--text-primary), var(--accent-cyan));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
+            color: var(--ink);
+            font-weight: 700;
         }
 
         .empty-state p {
-            color: var(--text-secondary);
+            color: var(--ink-light);
             font-size: 16px;
             max-width: 400px;
             margin: 0 auto;
@@ -507,37 +511,32 @@
 
         /* Error Message */
         .error-message {
-            background: linear-gradient(135deg, rgba(239, 68, 68, 0.1), rgba(239, 68, 68, 0.05));
-            border: 1px solid rgba(239, 68, 68, 0.3);
-            color: var(--accent-red);
-            padding: 20px 28px;
-            border-radius: 16px;
+            background: rgba(153, 27, 27, 0.08);
+            border: 1px solid rgba(153, 27, 27, 0.3);
+            color: var(--error);
+            padding: 20px 24px;
+            border-radius: 12px;
             margin-bottom: 24px;
             display: flex;
             align-items: center;
             gap: 12px;
-            animation: shake 0.5s ease;
-        }
-
-        @keyframes shake {
-            0%, 100% { transform: translateX(0); }
-            25% { transform: translateX(-10px); }
-            75% { transform: translateX(10px); }
+            font-weight: 500;
         }
 
         /* Footer */
         footer {
             margin-top: 60px;
-            padding-top: 40px;
-            border-top: 1px solid var(--border);
+            padding-top: 32px;
+            border-top: 2px solid var(--tape);
             text-align: center;
-            color: var(--text-muted);
-            font-size: 13px;
+            color: var(--ink-light);
+            font-size: 14px;
         }
 
         footer a {
-            color: var(--accent-cyan);
+            color: var(--cardboard-dark);
             text-decoration: none;
+            font-weight: 600;
         }
 
         footer a:hover {
@@ -547,19 +546,21 @@
         /* Responsive */
         @media (max-width: 768px) {
             h1 {
-                font-size: 32px;
+                font-size: 28px;
             }
 
             .card-value {
-                font-size: 36px;
+                font-size: 32px;
             }
 
             .packages-grid {
                 grid-template-columns: 1fr;
             }
 
-            .dashboard {
-                grid-template-columns: 1fr;
+            .section-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 16px;
             }
         }
     </style>
@@ -572,7 +573,7 @@
                     <div class="logo">📦</div>
                     <div>
                         <h1>Parcel Tracker</h1>
-                        <div class="subtitle">Automated Delivery Monitoring</div>
+                        <div class="subtitle">Automated delivery monitoring from iCloud Mail</div>
                     </div>
                 </div>
                 <button class="refresh-btn" id="refreshBtn" onclick="loadPackages()">
@@ -583,40 +584,43 @@
         </header>
 
         <div class="dashboard">
-            <div class="card">
+            <div class="card status-card">
                 <div class="card-header">
-                    <div class="card-icon status" id="statusIcon">●</div>
+                    <div class="card-icon">●</div>
                     <div class="card-label">System Status</div>
                 </div>
-                <div class="status-text" id="statusText">Connecting...</div>
-                <div class="last-update" id="lastUpdate">Waiting for connection...</div>
+                <div class="card-value" style="font-size: 24px;">
+                    <span class="status-badge" id="statusBadge">
+                        <span class="status-dot" id="statusDot"></span>
+                        <span id="statusText">Connecting...</span>
+                    </span>
+                </div>
             </div>
 
-            <div class="card">
+            <div class="card email-card">
                 <div class="card-header">
-                    <div class="card-icon emails">✉</div>
-                    <div class="card-label">Emails Processed</div>
+                    <div class="card-icon">✉</div>
+                    <div class="card-label">Emails Scanned</div>
                 </div>
                 <div class="card-value" id="emailsRead">0</div>
-                <div class="last-update">Total emails scanned from IMAP</div>
             </div>
 
-            <div class="card">
+            <div class="card package-card">
                 <div class="card-header">
-                    <div class="card-icon packages">📬</div>
-                    <div class="card-label">Packages Tracked</div>
+                    <div class="card-icon">📬</div>
+                    <div class="card-label">Packages Found</div>
                 </div>
                 <div class="card-value" id="packagesCreated">0</div>
-                <div class="last-update">Deliveries added to Parcel</div>
             </div>
 
-            <div class="card">
+            <div class="card api-card">
                 <div class="card-header">
-                    <div class="card-icon api">⚡</div>
-                    <div class="card-label">API Requests</div>
+                    <div class="card-icon">⚡</div>
+                    <div class="card-label">API Quota</div>
                 </div>
-                <div class="card-value small" id="apiRequests">0<span style="font-size: 18px; color: var(--text-muted);">/20</span></div>
-                <div class="last-update">Daily Parcel API quota</div>
+                <div class="card-value small" id="apiRequests">
+                    0<span style="font-size: 16px; color: var(--ink-light);">/20</span>
+                </div>
             </div>
         </div>
 
@@ -624,7 +628,7 @@
         <div id="errorContainer"></div>
 
         <div class="section-header">
-            <h2 class="section-title">Recent Deliveries</h2>
+            <h2 class="section-title">📋 Recent Deliveries</h2>
         </div>
 
         <div class="packages-grid" id="packagesGrid">
@@ -632,7 +636,7 @@
         </div>
 
         <footer>
-            <p>Parcel Tracker • Auto-syncing from iCloud Mail • <a href="https://github.com/steveafrost/parcel-tracker" target="_blank">GitHub</a></p>
+            <p>Parcel Tracker • Scanning INBOX & Archive folders • <a href="https://github.com/steveafrost/parcel-tracker" target="_blank">View on GitHub</a></p>
         </footer>
     </div>
 
@@ -646,23 +650,28 @@
                 const data = await response.json();
 
                 if (response.ok) {
-                    document.getElementById('statusIcon').classList.remove('offline');
-                    document.getElementById('statusIcon').classList.add('status');
-                    document.getElementById('statusIcon').style.color = 'var(--accent-green)';
-                    document.getElementById('statusText').textContent = 'Online';
-                    document.getElementById('statusText').classList.remove('offline');
-                    document.getElementById('lastUpdate').textContent = 'Connected and polling';
+                    const badge = document.getElementById('statusBadge');
+                    const dot = document.getElementById('statusDot');
+                    const text = document.getElementById('statusText');
+                    
+                    badge.classList.remove('offline');
+                    badge.classList.add('online');
+                    dot.style.color = 'var(--success)';
+                    text.textContent = 'Online';
                     return true;
                 }
             } catch (error) {
                 console.error('Health check failed:', error);
             }
 
-            document.getElementById('statusIcon').classList.add('offline');
-            document.getElementById('statusIcon').style.color = 'var(--accent-red)';
-            document.getElementById('statusText').textContent = 'Offline';
-            document.getElementById('statusText').classList.add('offline');
-            document.getElementById('lastUpdate').textContent = 'Connection failed';
+            const badge = document.getElementById('statusBadge');
+            const dot = document.getElementById('statusDot');
+            const text = document.getElementById('statusText');
+            
+            badge.classList.remove('online');
+            badge.classList.add('offline');
+            dot.style.color = 'var(--error)';
+            text.textContent = 'Offline';
             return false;
         }
 
@@ -674,8 +683,6 @@
                     document.getElementById('emailsRead').textContent = stats.emailsRead || 0;
                     document.getElementById('packagesCreated').textContent = stats.packagesCreated || 0;
                     
-                    // Estimate API requests (packages created = successful API calls)
-                    // This is a rough estimate - in reality, failed requests also count
                     apiRequestCount = stats.packagesCreated || 0;
                     updateApiDisplay();
                 }
@@ -686,9 +693,8 @@
 
         function updateApiDisplay() {
             const apiElement = document.getElementById('apiRequests');
-            apiElement.innerHTML = `${apiRequestCount}<span style="font-size: 18px; color: var(--text-muted);">/20</span>`;
+            apiElement.innerHTML = `${apiRequestCount}<span style="font-size: 16px; color: var(--ink-light);">/20</span>`;
             
-            // Show rate limit warning if approaching limit
             const container = document.getElementById('rateLimitContainer');
             if (apiRequestCount >= 15) {
                 const isCritical = apiRequestCount >= 18;
@@ -698,11 +704,14 @@
                     <div class="rate-limit ${isCritical ? '' : 'warning'}">
                         <div class="rate-limit-icon">${isCritical ? '🚨' : '⚠️'}</div>
                         <div class="rate-limit-content">
-                            <div class="rate-limit-title">${isCritical ? 'Critical: API Rate Limit Almost Reached' : 'Warning: API Rate Limit Approaching'}</div>
+                            <div class="rate-limit-title">
+                                ${isCritical ? 'Critical: Daily API Limit Almost Reached' : 'Warning: API Limit Approaching'}
+                            </div>
                             <div class="rate-limit-text">
-                                You've used ${apiRequestCount} of 20 daily requests. ${isCritical ? 'Only ' + (20 - apiRequestCount) + ' remaining today!' : ''}
+                                You've used ${apiRequestCount} of 20 daily Parcel API requests. 
+                                ${isCritical ? 'Only ' + (20 - apiRequestCount) + ' remaining today.' : ''}
                                 <div class="rate-limit-bar">
-                                    <div class="rate-limit-fill" style="width: ${percentage}%; background: ${isCritical ? 'var(--accent-red)' : 'var(--accent-orange)'};"></div>
+                                    <div class="rate-limit-fill" style="width: ${percentage}%;"></div>
                                 </div>
                             </div>
                         </div>
