@@ -124,15 +124,13 @@ export class EmailPoller {
 
         // Submit to Parcel API
         try {
-          const parcelPkg = await this.parcelClient.createPackage({
+          await this.parcelClient.createPackage({
             trackingNumber: trackingInfo.trackingNumber,
             carrier: trackingInfo.carrier,
             name: trackingInfo.productName,
           });
 
-          // Update with Parcel ID
-          this.packageRepo.updateParcelId(pkg.id, parcelPkg.id);
-          console.log(`Submitted to Parcel: ${parcelPkg.id}`);
+          console.log(`Submitted to Parcel: ${trackingInfo.trackingNumber}`);
         } catch (parcelError) {
           console.error(`Failed to submit to Parcel: ${parcelError}`);
           // Continue - package is saved in DB and can be retried later

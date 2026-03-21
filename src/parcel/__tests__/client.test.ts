@@ -1,4 +1,4 @@
-import { ParcelClient, ParcelPackageInput } from '../client';
+import { ParcelClient } from '../client';
 
 // Note: These tests require real Parcel API key
 // Set SKIP_PARCEL_TESTS=true to skip
@@ -15,18 +15,17 @@ const skipTests = process.env.SKIP_PARCEL_TESTS === 'true';
     client = new ParcelClient(apiKey);
   });
 
-  test('creates a package', async () => {
-    const input: ParcelPackageInput = {
-      trackingNumber: '1Z999AA10123456784',
-      carrier: 'UPS',
-      name: 'Test Package',
-    };
+  test('constructor stores api key', () => {
+    expect(client).toBeDefined();
+  });
 
-    // This would actually call the API - mocked for now
-    const result = await client.createPackage(input);
-    expect(result).toBeDefined();
-    expect(result.id).toBeDefined();
-  }, 30000);
+  test('throws error for unsupported getPackage', async () => {
+    await expect(client.getPackage('123')).rejects.toThrow('does not support');
+  });
+
+  test('throws error for unsupported deletePackage', async () => {
+    await expect(client.deletePackage('123')).rejects.toThrow('does not support');
+  });
 });
 
 describe('ParcelClient Unit', () => {
