@@ -106,8 +106,10 @@ function extractSenderName(from: string): string {
   const emailMatch = from.match(/@([^>]+)/);
   if (emailMatch) {
     const domain = emailMatch[1];
+    // Clean up "order." prefix if present
+    const cleanDomain = domain.replace(/^order\./i, '');
     // Capitalize first letter of domain
-    return domain.charAt(0).toUpperCase() + domain.slice(1);
+    return cleanDomain.charAt(0).toUpperCase() + cleanDomain.slice(1);
   }
   
   // Fallback to the full from string

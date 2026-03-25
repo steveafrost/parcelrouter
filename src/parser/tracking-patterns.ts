@@ -10,22 +10,23 @@ export const TRACKING_PATTERNS: TrackingPattern[] = [
   // UPS - starts with 1Z followed by 16 alphanumeric (very specific)
   { carrier: 'UPS', pattern: /\b(1Z[A-Z0-9]{16})\b/i, confidence: 'high' },
   
-  // Amazon Logistics (very specific)
-  { carrier: 'Amazon', pattern: /\b(TBA[A-Z0-9]{12})\b/i, confidence: 'high' },
-  { carrier: 'Amazon', pattern: /\b(TBC[A-Z0-9]{12})\b/i, confidence: 'high' },
-  { carrier: 'Amazon', pattern: /\b(TBM[A-Z0-9]{12})\b/i, confidence: 'high' },
+  // Amazon Logistics (very specific) - case sensitive, uppercase only
+  { carrier: 'Amazon', pattern: /\b(TBA[A-Z0-9]{12})\b/, confidence: 'high' },
+  { carrier: 'Amazon', pattern: /\b(TBC[A-Z0-9]{12})\b/, confidence: 'high' },
+  { carrier: 'Amazon', pattern: /\b(TBM[A-Z0-9]{12})\b/, confidence: 'high' },
   
   // USPS - 20-22 digits or XX123456789XX format (unlikely to be order numbers)
   { carrier: 'USPS', pattern: /\b(\d{20,22})\b/, confidence: 'high' },
   { carrier: 'USPS', pattern: /\b([A-Z]{2}\d{9}[A-Z]{2})\b/i, confidence: 'high' },
   
-  // OnTrac - starts with C followed by 14 alphanumeric
-  { carrier: 'OnTrac', pattern: /\b(C[A-Z0-9]{14})\b/i, confidence: 'high' },
+  // OnTrac - starts with C followed by 14 alphanumeric (must be uppercase, no /i flag)
+  // Tracking numbers are uppercase only like C12345678901234
+  { carrier: 'OnTrac', pattern: /\b(C[0-9]{14})\b/, confidence: 'high' },
   
-  // Lasership
-  { carrier: 'LaserShip', pattern: /\b(1LS[A-Z0-9]{12})\b/i, confidence: 'high' },
-  { carrier: 'LaserShip', pattern: /\b(LX[A-Z0-9]{10,14})\b/i, confidence: 'medium' },
-  { carrier: 'LaserShip', pattern: /\b(LS[0-9]{8,12})\b/i, confidence: 'medium' },
+  // Lasership - tracking numbers are alphanumeric uppercase only
+  { carrier: 'LaserShip', pattern: /\b(1LS[A-Z0-9]{12})\b/, confidence: 'high' },
+  { carrier: 'LaserShip', pattern: /\b(LX[0-9]{10,14})\b/, confidence: 'medium' },
+  { carrier: 'LaserShip', pattern: /\b(LS[0-9]{8,12})\b/, confidence: 'medium' },
   
   // FedEx - 12 or 15 digits (need context to avoid order numbers)
   { carrier: 'FedEx', pattern: /\b(\d{12})\b/, strict: true, confidence: 'medium' },
