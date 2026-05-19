@@ -4,7 +4,7 @@ import path from 'path';
 import { formatPreflight, runPreflight } from '../preflight';
 
 function createTempProject(): string {
-  return fs.mkdtempSync(path.join(os.tmpdir(), 'parcel-tracker-preflight-'));
+  return fs.mkdtempSync(path.join(os.tmpdir(), 'parcelrouter-preflight-'));
 }
 
 describe('preflight setup checks', () => {
@@ -83,7 +83,7 @@ describe('preflight setup checks', () => {
       },
     });
 
-    expect(formatPreflight(result)).toContain('Parcel Tracker setup check');
+    expect(formatPreflight(result)).toContain('ParcelRouter setup check');
     expect(formatPreflight(result)).toContain('[ok] IMAP_USER');
   });
 });

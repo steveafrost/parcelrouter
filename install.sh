@@ -4,7 +4,7 @@ set -euo pipefail
 APP_NAME="ParcelRouter"
 ENV_FILE=".env"
 REPO_URL="https://github.com/steveafrost/parcel-tracker.git"
-INSTALL_DIR="${PARCEL_TRACKER_DIR:-parcel-tracker}"
+INSTALL_DIR="${PARCEL_ROUTER_DIR:-parcelrouter}"
 
 print_step() {
   printf '\n==> %s\n' "$1"
@@ -85,7 +85,7 @@ if [ ! -f ".env.example" ] || [ ! -f "docker-compose.yml" ]; then
   fi
 
   if [ -e "$INSTALL_DIR" ]; then
-    printf '%s already exists. Set PARCEL_TRACKER_DIR to choose another install folder.\n' "$INSTALL_DIR" >&2
+    printf '%s already exists. Set PARCEL_ROUTER_DIR to choose another install folder.\n' "$INSTALL_DIR" >&2
     exit 1
   fi
 
@@ -155,4 +155,4 @@ $COMPOSE up -d --build
 
 print_step "Ready"
 printf '%s is starting at http://localhost:9001\n' "$APP_NAME"
-printf 'Watch logs with: %s logs -f parcel-tracker\n' "$COMPOSE"
+printf 'Watch logs with: %s logs -f parcelrouter\n' "$COMPOSE"

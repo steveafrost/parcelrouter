@@ -25,8 +25,8 @@ For the impatient:
 
 ```bash
 # 1. Clone the repo
-git clone https://github.com/steveafrost/parcel-tracker.git
-cd parcel-tracker
+git clone https://github.com/steveafrost/parcel-tracker.git parcelrouter
+cd parcelrouter
 
 # 2. Copy environment template
 cp .env.example .env
@@ -142,7 +142,7 @@ docker-compose up -d --build
 Check the logs to ensure it's working:
 
 ```bash
-docker logs -f parcel-tracker
+docker logs -f parcelrouter
 ```
 
 You should see:
@@ -212,7 +212,7 @@ Medium and low confidence detections go to the review queue. Approving a review 
 docker-compose up -d
 
 # View logs
-docker logs -f parcel-tracker
+docker logs -f parcelrouter
 
 # Stop
 docker-compose down
@@ -265,12 +265,12 @@ This only applies if `PARCEL_API_KEY` is configured. The Parcel API has a **20 r
 1. Check the dashboard stats - are emails being scanned?
 2. Look for shipping emails in your INBOX from supported carriers
 3. Verify shipping emails aren't being filtered to another folder
-4. Check the logs: `docker logs parcel-tracker | grep -i "found"
+4. Check the logs: `docker logs parcelrouter | grep -i "found"
 
 ### Dashboard not loading
 
 1. Check container is running: `docker ps | grep parcel`
-2. Check logs for errors: `docker logs parcel-tracker`
+2. Check logs for errors: `docker logs parcelrouter`
 3. Verify port 9001 isn't in use: `lsof -i :9001`
 
 ### Wrong tracking numbers extracted

@@ -1,9 +1,9 @@
 version: '3.8'
 
 services:
-  parcel-tracker:
+  parcelrouter:
     build: .
-    container_name: parcel-tracker
+    container_name: parcelrouter
     restart: unless-stopped
     ports:
       - "9001:3000"

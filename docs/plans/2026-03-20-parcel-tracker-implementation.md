@@ -25,7 +25,7 @@
 
 ```json
 {
-  "name": "parcel-tracker",
+  "name": "parcelrouter",
   "version": "1.0.0",
   "description": "Local-first package tracking and delivery event routing from your inbox",
   "main": "dist/index.js",

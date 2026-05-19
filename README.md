@@ -31,8 +31,8 @@ It reads shipping emails from your mailbox, extracts tracking numbers, stores pa
 ### 1. Clone The App
 
 ```bash
-git clone https://github.com/steveafrost/parcel-tracker.git
-cd parcel-tracker
+git clone https://github.com/steveafrost/parcel-tracker.git parcelrouter
+cd parcelrouter
 ```
 
 ### 2. Create A Local Environment File
@@ -127,7 +127,7 @@ Medium and low-confidence detections wait in the review queue before they become
 Set `WEBHOOK_URL` to receive package and review events:
 
 ```bash
-WEBHOOK_URL=https://example.com/parcel-tracker-webhook
+WEBHOOK_URL=https://example.com/parcelrouter-webhook
 WEBHOOK_SECRET=choose-a-long-random-secret
 WEBHOOK_TIMEOUT_MS=5000
 ```

@@ -271,7 +271,7 @@ export function runPreflight(options: PreflightOptions = {}): PreflightResult {
 }
 
 export function formatPreflight(result: PreflightResult): string {
-  const lines = ['Parcel Tracker setup check', ''];
+  const lines = ['ParcelRouter setup check', ''];
 
   for (const check of result.checks) {
     lines.push(`[${check.status}] ${check.title}: ${check.detail}`);
