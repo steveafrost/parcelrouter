@@ -1,6 +1,6 @@
 # Parcel Tracker - Setup Guide
 
-Complete setup instructions for self-hosted package tracking from iCloud Mail to Parcel.
+Complete setup instructions for self-hosted package tracking and package-event automation from iCloud Mail.
 
 ## Table of Contents
 - [Prerequisites](#prerequisites)
@@ -15,7 +15,7 @@ Complete setup instructions for self-hosted package tracking from iCloud Mail to
 Before starting, you'll need:
 
 1. **iCloud Mail account** with 2-factor authentication enabled
-2. **Parcel Premium account** (required for API access)
+2. **Optional Parcel Premium account** if you want to sync detected packages to Parcel
 3. **Docker & Docker Compose** installed on your machine
 4. **macOS, Linux, or Windows** with WSL2
 
@@ -34,10 +34,14 @@ cp .env.example .env
 # 3. Edit .env with your credentials (see below)
 nano .env
 
-# 4. Start with Docker
+# 4. Check configuration
+npm ci
+npm run setup:check
+
+# 5. Start with Docker
 docker-compose up -d
 
-# 5. Open dashboard
+# 6. Open dashboard
 open http://localhost:9001
 ```
 
@@ -55,14 +59,29 @@ Since you have 2FA enabled on your Apple ID, you need an app-specific password:
 
 **Important**: This password is shown only once. Save it in your `.env` file immediately.
 
-### Step 2: Get Parcel API Key
+### Step 2: Decide Whether To Sync To Parcel
+
+Parcel Tracker works without Parcel. If you leave `PARCEL_API_KEY` blank, packages are stored locally and shown in the dashboard.
+
+If you want detected packages to be added to the Parcel app automatically:
 
 1. Sign in to [web.parcelapp.net](https://web.parcelapp.net) with your Parcel account
 2. Go to **Account** → **API** (requires Parcel Premium subscription)
 3. Generate a new API key
 4. Copy the key (starts with something like `parcel_...`)
 
-### Step 3: Configure Environment Variables
+### Step 3: Decide Whether To Emit Webhooks
+
+Parcel Tracker can post package and review events to your own endpoint. Leave `WEBHOOK_URL` blank to disable this.
+
+Use webhooks for:
+
+- Home Assistant automations
+- n8n, Zapier, or Pipedream workflows
+- ntfy or chat notification bridges
+- Custom delivery dashboards
+
+### Step 4: Configure Environment Variables
 
 Copy the example file and edit it:
 
@@ -77,14 +96,30 @@ Edit `.env` with your credentials:
 IMAP_USER=your.email@icloud.com
 IMAP_PASS=abcd-efgh-ijkl-mnop  # Your app-specific password from Step 1
 
-# Parcel API Configuration  
-PARCEL_API_KEY=parcel_live_xxxxx  # Your API key from Step 2
+# Optional Parcel API sync
+PARCEL_API_KEY=  # Leave blank for local-only mode, or paste your key from Step 2
+
+# Optional webhooks
+WEBHOOK_URL=
+WEBHOOK_SECRET=
+WEBHOOK_TIMEOUT_MS=5000
 
 # Optional: Adjust polling interval (default: 3600 seconds = 1 hour)
 # POLL_INTERVAL=1800  # Check every 30 minutes instead
 ```
 
-### Step 4: Deploy with Docker
+### Step 5: Check Configuration
+
+Before starting the container, run the setup check:
+
+```bash
+npm ci
+npm run setup:check
+```
+
+The check validates required iCloud IMAP settings, optional Parcel and webhook settings, numeric ports and intervals, and local database writability.
+
+### Step 6: Deploy with Docker
 
 Build and start the container:
 
@@ -106,7 +141,7 @@ Polling folder: INBOX
 ...
 ```
 
-### Step 5: Access the Dashboard
+### Step 7: Access the Dashboard
 
 Open your browser to:
 
@@ -118,7 +153,8 @@ The dashboard shows:
 - System status
 - Emails scanned count
 - Packages found count
-- API quota usage (20/day limit)
+- Parcel sync mode: local-only or enabled
+- Review queue for uncertain detections
 - Confidence indicators for each package
 
 ## Configuration
@@ -129,7 +165,10 @@ The dashboard shows:
 |----------|----------|---------|-------------|
 | `IMAP_USER` | Yes | - | Your iCloud email address |
 | `IMAP_PASS` | Yes | - | App-specific password from Apple ID |
-| `PARCEL_API_KEY` | Yes | - | API key from Parcel web app |
+| `PARCEL_API_KEY` | No | - | Optional API key from Parcel web app |
+| `WEBHOOK_URL` | No | - | Optional endpoint for package and review events |
+| `WEBHOOK_SECRET` | No | - | Optional HMAC signing secret |
+| `WEBHOOK_TIMEOUT_MS` | No | `5000` | Optional webhook request timeout |
 | `IMAP_HOST` | No | `imap.mail.me.com` | IMAP server (don't change for iCloud) |
 | `IMAP_PORT` | No | `993` | IMAP port |
 | `POLL_INTERVAL` | No | `3600` | Seconds between email checks |
@@ -147,10 +186,10 @@ By default, the tracker:
 Each package shows a confidence indicator:
 
 - **🟢 High** (90-99%): UPS, Amazon Logistics, USPS - very specific formats
-- **🟡 Medium** (70-85%): FedEx with tracking context
-- **🔴 Low** (40-60%): Short digit sequences - **review these manually**
+- **🟡 Medium** (70-85%): FedEx with tracking context - held for review
+- **🔴 Low** (40-60%): Short digit sequences - held for review
 
-Low confidence packages are highlighted with red borders and warning banners.
+Medium and low confidence detections go to the review queue. Approving a review item turns it into a tracked package. Ignoring it removes it from the pending queue.
 
 ## Docker Deployment
 
@@ -198,7 +237,7 @@ Then access at `http://localhost:8080`
 
 ### "Failed to submit to Parcel" errors
 
-The Parcel API has a **20 requests per day** limit. If you hit this:
+This only applies if `PARCEL_API_KEY` is configured. The Parcel API has a **20 requests per day** limit. If you hit this:
 - Wait until tomorrow (resets daily)
 - Check your Parcel app - packages may already be there
 - Lower your polling frequency: `POLL_INTERVAL=7200` (2 hours)
@@ -250,12 +289,31 @@ If you want to build on top of this:
 | `GET /packages` | List all tracked packages |
 | `GET /packages/:id` | Get specific package |
 | `DELETE /packages/:id` | Remove package from tracker |
+| `GET /review` | List pending review items |
+| `POST /review/:id/approve` | Approve review item and create package |
+| `POST /review/:id/ignore` | Ignore review item |
+
+## Webhook Events
+
+If `WEBHOOK_URL` is configured, Parcel Tracker posts JSON envelopes for these events:
+
+| Event | When it fires |
+|-------|---------------|
+| `package.created` | A high-confidence package is created or a review item is approved |
+| `package.deleted` | A package is removed from the local tracker |
+| `review.created` | A medium or low-confidence detection enters the review queue |
+| `review.approved` | A review item is approved |
+| `review.ignored` | A review item is ignored |
+| `parcel.synced` | A package is submitted to Parcel successfully |
+| `parcel.sync_failed` | Parcel sync fails |
+
+When `WEBHOOK_SECRET` is set, requests include `X-Parcel-Tracker-Signature` with a `sha256=` HMAC of the JSON body.
 
 ## Next Steps
 
 - 📧 Check your Archive folder for old shipping emails
-- ⚠️ Review any **Low Confidence** packages in the dashboard
-- 🔔 Watch your API quota (20/day) - shown in dashboard
+- ⚠️ Review medium and low confidence detections in the dashboard
+- 🔔 If Parcel sync is configured, watch for Parcel API errors in the logs
 - 🐛 Report issues at: https://github.com/steveafrost/parcel-tracker/issues
 
 ## Support

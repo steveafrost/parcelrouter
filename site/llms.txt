@@ -1,0 +1,47 @@
+# Parcel Tracker
+
+Parcel Tracker is a local-first package tracking and automation app for people who want control over their delivery data.
+
+## Summary
+
+Parcel Tracker scans a user's email inbox locally, detects package tracking numbers, stores package metadata in a local database, and routes delivery events to tools such as Parcel, webhooks, Home Assistant, Apple Reminders, ntfy, Slack, Discord, and calendars.
+
+The project is not positioned as another shopping app or generic carrier tracker. Its distinction is privacy, local ownership, auditable parsing, review queues for uncertain detections, and automation-friendly delivery events.
+
+## Current Capabilities
+
+- Runs locally with Docker and Node.js.
+- Uses SQLite for package and polling state.
+- Connects to iCloud Mail over IMAP.
+- Detects UPS, FedEx, USPS, Amazon Logistics, DHL, OnTrac, and LaserShip tracking numbers.
+- Generates package titles from sender, subject, retailer, and tracking context.
+- Scores detections as high, medium, or low confidence.
+- Holds medium and low confidence detections in a review queue until approved or ignored.
+- Shows a local dashboard.
+- Provides REST endpoints for health, stats, package listing, package details, and package deletion.
+- Provides review queue endpoints for listing, approving, and ignoring uncertain package detections.
+- Optionally syncs detected packages to the Parcel app through the Parcel API.
+- Optionally posts webhook events for package creation, package deletion, review creation, review approval, review ignore, Parcel sync success, and Parcel sync failure.
+
+## Intended Users
+
+- Self-hosting users.
+- Privacy-conscious online shoppers.
+- Home automation users.
+- Families and households that want shared package visibility.
+- Developers who want a local package-event API.
+
+## Product Position
+
+The core promise is: Own your delivery data. Automatically find packages from your email, review uncertain matches, and sync delivery events to the tools you already use.
+
+## Repository
+
+Primary repository: https://github.com/steveafrost/parcel-tracker
+
+## Important Pages
+
+- Marketing page: /index.html
+- Setup guide: ../SETUP.md
+- Product strategy: ../docs/product-strategy.md
+- README: ../README.md

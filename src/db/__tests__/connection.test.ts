@@ -17,6 +17,7 @@ describe('Database Connection', () => {
     
     const tableNames = tables.map(t => t.name);
     expect(tableNames).toContain('tracked_packages');
+    expect(tableNames).toContain('review_items');
     expect(tableNames).toContain('tracking_events');
     expect(tableNames).toContain('last_poll');
   });

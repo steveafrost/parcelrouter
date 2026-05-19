@@ -12,6 +12,11 @@ describe('Tracking Pattern Extraction', () => {
       expect(extractTrackingNumber(text)).toBe('123456789012');
     });
 
+    test('does not treat order status words as order numbers', () => {
+      const text = 'Your order has shipped. Tracking number: 518120992083';
+      expect(extractTrackingNumber(text)).toBe('518120992083');
+    });
+
     test('extracts FedEx 15-digit', () => {
       const text = 'Tracking: 123456789012345';
       expect(extractTrackingNumber(text)).toBe('123456789012345');
@@ -29,6 +34,11 @@ describe('Tracking Pattern Extraction', () => {
 
     test('returns null for no match', () => {
       expect(extractTrackingNumber('No tracking here')).toBeNull();
+    });
+
+    test('rejects labeled order numbers near shipping text', () => {
+      const text = 'Your order number: 518120992083 has shipped';
+      expect(extractTrackingNumber(text)).toBeNull();
     });
 
     test('does not extract CSS class names as OnTrac tracking', () => {

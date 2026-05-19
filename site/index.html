@@ -1,0 +1,793 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Parcel Tracker - Local-first package tracking from your inbox</title>
+    <meta name="description" content="Parcel Tracker scans your inbox locally, detects deliveries, and routes package events to Parcel, webhooks, Home Assistant, reminders, and your own tools.">
+    <meta name="robots" content="index, follow">
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="Parcel Tracker - Own your delivery data">
+    <meta property="og:description" content="Scan your inbox locally, review package detections, and route delivery events anywhere.">
+    <meta property="og:image" content="og-image.png">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Parcel Tracker - Own your delivery data">
+    <meta name="twitter:description" content="A local-first package tracking and automation app for your inbox.">
+    <style>
+      :root {
+        --bg: #ffffff;
+        --ink: #14201b;
+        --muted: #53605b;
+        --line: #d9e2dd;
+        --soft: #f4f8f5;
+        --soft-2: #edf3ef;
+        --green: #0f6b47;
+        --green-2: #0a4b32;
+        --amber: #b97818;
+        --amber-soft: #fff3dc;
+        --panel: #fbfdfb;
+        --shadow: 0 24px 70px rgba(20, 32, 27, 0.12);
+        --radius: 8px;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--ink);
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        line-height: 1.5;
+      }
+
+      a {
+        color: inherit;
+      }
+
+      .wrap {
+        width: min(1120px, calc(100% - 40px));
+        margin: 0 auto;
+      }
+
+      .site-header {
+        position: sticky;
+        top: 0;
+        z-index: 20;
+        background: rgba(255, 255, 255, 0.92);
+        backdrop-filter: blur(14px);
+        border-bottom: 1px solid var(--line);
+      }
+
+      .nav {
+        min-height: 72px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 28px;
+      }
+
+      .brand {
+        display: inline-flex;
+        align-items: center;
+        gap: 12px;
+        font-weight: 760;
+        text-decoration: none;
+        letter-spacing: 0;
+      }
+
+      .brand-mark {
+        width: 34px;
+        height: 34px;
+        border-radius: 7px;
+        display: grid;
+        place-items: center;
+        background: var(--green);
+        color: #fff;
+        font-weight: 800;
+      }
+
+      .nav-links {
+        display: flex;
+        align-items: center;
+        gap: 22px;
+        color: var(--muted);
+        font-size: 14px;
+        font-weight: 640;
+      }
+
+      .nav-links a {
+        text-decoration: none;
+      }
+
+      .button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 44px;
+        padding: 0 18px;
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        font-size: 14px;
+        font-weight: 720;
+        text-decoration: none;
+        white-space: nowrap;
+      }
+
+      .button.primary {
+        border-color: var(--green);
+        background: var(--green);
+        color: #fff;
+      }
+
+      .button.secondary {
+        background: #fff;
+        color: var(--ink);
+      }
+
+      .hero {
+        padding: 86px 0 72px;
+        border-bottom: 1px solid var(--line);
+      }
+
+      .hero-grid {
+        display: grid;
+        grid-template-columns: minmax(0, 0.92fr) minmax(460px, 1.08fr);
+        gap: 52px;
+        align-items: center;
+      }
+
+      h1 {
+        margin: 0;
+        max-width: 720px;
+        font-size: 68px;
+        line-height: 0.98;
+        letter-spacing: 0;
+        font-weight: 820;
+      }
+
+      .hero-copy {
+        margin: 24px 0 0;
+        max-width: 610px;
+        color: var(--muted);
+        font-size: 20px;
+        line-height: 1.55;
+      }
+
+      .hero-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        margin-top: 34px;
+      }
+
+      .proof-list {
+        display: grid;
+        gap: 10px;
+        margin: 32px 0 0;
+        padding: 0;
+        list-style: none;
+        color: var(--muted);
+        font-size: 15px;
+      }
+
+      .proof-list li {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .check {
+        width: 18px;
+        height: 18px;
+        border-radius: 50%;
+        display: inline-grid;
+        place-items: center;
+        background: var(--soft-2);
+        color: var(--green);
+        font-size: 12px;
+        font-weight: 800;
+        flex: none;
+      }
+
+      .product-frame {
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        background: #fff;
+        box-shadow: var(--shadow);
+        overflow: hidden;
+      }
+
+      .app-topbar {
+        height: 52px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 18px;
+        border-bottom: 1px solid var(--line);
+        background: var(--panel);
+      }
+
+      .window-dots {
+        display: flex;
+        gap: 7px;
+      }
+
+      .window-dots span {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: #cbd6d0;
+      }
+
+      .app-title {
+        color: var(--muted);
+        font-size: 13px;
+        font-weight: 720;
+      }
+
+      .mock-app {
+        display: grid;
+        grid-template-columns: 176px 1fr;
+        min-height: 430px;
+      }
+
+      .sidebar {
+        border-right: 1px solid var(--line);
+        background: var(--soft);
+        padding: 18px 14px;
+      }
+
+      .side-item {
+        padding: 10px 12px;
+        border-radius: 7px;
+        color: var(--muted);
+        font-size: 13px;
+        font-weight: 700;
+      }
+
+      .side-item.active {
+        background: #fff;
+        color: var(--green);
+        border: 1px solid var(--line);
+      }
+
+      .main-panel {
+        padding: 20px;
+      }
+
+      .panel-head {
+        display: flex;
+        justify-content: space-between;
+        gap: 16px;
+        align-items: flex-start;
+        margin-bottom: 18px;
+      }
+
+      .panel-head h2 {
+        margin: 0;
+        font-size: 22px;
+        letter-spacing: 0;
+      }
+
+      .status-pill {
+        padding: 7px 10px;
+        border-radius: 999px;
+        background: var(--amber-soft);
+        color: #7a4b0f;
+        font-size: 12px;
+        font-weight: 780;
+      }
+
+      .package-list {
+        display: grid;
+        gap: 10px;
+      }
+
+      .package-row {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 16px;
+        padding: 14px;
+        border: 1px solid var(--line);
+        border-radius: 9px;
+        background: #fff;
+      }
+
+      .package-row strong {
+        display: block;
+        font-size: 15px;
+        margin-bottom: 4px;
+      }
+
+      .package-row span {
+        display: block;
+        color: var(--muted);
+        font-size: 12px;
+      }
+
+      .confidence {
+        align-self: start;
+        min-width: 76px;
+        padding: 5px 8px;
+        border-radius: 999px;
+        text-align: center;
+        font-size: 11px;
+        font-weight: 800;
+      }
+
+      .confidence.high {
+        background: #e5f4ec;
+        color: var(--green);
+      }
+
+      .confidence.review {
+        background: var(--amber-soft);
+        color: #7a4b0f;
+      }
+
+      section {
+        padding: 76px 0;
+        border-bottom: 1px solid var(--line);
+      }
+
+      .section-grid {
+        display: grid;
+        grid-template-columns: 0.8fr 1.2fr;
+        gap: 54px;
+        align-items: start;
+      }
+
+      h2 {
+        margin: 0;
+        font-size: 40px;
+        line-height: 1.08;
+        letter-spacing: 0;
+      }
+
+      .section-copy {
+        margin: 18px 0 0;
+        color: var(--muted);
+        font-size: 17px;
+      }
+
+      .steps {
+        display: grid;
+        gap: 14px;
+      }
+
+      .step {
+        display: grid;
+        grid-template-columns: 42px 1fr;
+        gap: 16px;
+        padding: 20px;
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        background: var(--panel);
+      }
+
+      .step-number {
+        width: 42px;
+        height: 42px;
+        border-radius: 8px;
+        display: grid;
+        place-items: center;
+        background: var(--green);
+        color: #fff;
+        font-weight: 820;
+      }
+
+      .step h3,
+      .feature h3,
+      .faq h3 {
+        margin: 0 0 6px;
+        font-size: 18px;
+        letter-spacing: 0;
+      }
+
+      .step p,
+      .feature p,
+      .faq p {
+        margin: 0;
+        color: var(--muted);
+        font-size: 15px;
+      }
+
+      .feature-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 14px;
+      }
+
+      .feature {
+        padding: 22px;
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        background: #fff;
+      }
+
+      .integrations {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 12px;
+      }
+
+      .integration {
+        padding: 18px;
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        background: var(--panel);
+        color: var(--ink);
+        font-weight: 760;
+      }
+
+      .faq-list {
+        display: grid;
+        gap: 14px;
+      }
+
+      .faq {
+        padding: 22px;
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        background: #fff;
+      }
+
+      .cta-band {
+        padding: 64px 0;
+        background: var(--green-2);
+        color: #fff;
+        border-bottom: none;
+      }
+
+      .cta-content {
+        display: flex;
+        justify-content: space-between;
+        gap: 32px;
+        align-items: center;
+      }
+
+      .cta-content h2 {
+        color: #fff;
+      }
+
+      .cta-content p {
+        margin: 14px 0 0;
+        max-width: 620px;
+        color: rgba(255, 255, 255, 0.78);
+      }
+
+      .cta-content .button {
+        background: #fff;
+        color: var(--green-2);
+        border-color: #fff;
+      }
+
+      .site-footer {
+        padding: 34px 0;
+        color: var(--muted);
+        font-size: 14px;
+      }
+
+      .footer-row {
+        display: flex;
+        justify-content: space-between;
+        gap: 20px;
+      }
+
+      .footer-row a {
+        color: var(--muted);
+      }
+
+      @media (max-width: 900px) {
+        .nav-links {
+          display: none;
+        }
+
+        .hero {
+          padding-top: 58px;
+        }
+
+        .hero-grid,
+        .section-grid {
+          grid-template-columns: 1fr;
+        }
+
+        h1 {
+          font-size: 50px;
+        }
+
+        .mock-app {
+          grid-template-columns: 1fr;
+        }
+
+        .sidebar {
+          display: none;
+        }
+
+        .feature-grid,
+        .integrations {
+          grid-template-columns: 1fr 1fr;
+        }
+
+        .cta-content,
+        .footer-row {
+          flex-direction: column;
+          align-items: flex-start;
+        }
+      }
+
+      @media (max-width: 560px) {
+        .wrap {
+          width: min(100% - 28px, 1120px);
+        }
+
+        h1 {
+          font-size: 42px;
+        }
+
+        h2 {
+          font-size: 32px;
+        }
+
+        .hero-copy {
+          font-size: 18px;
+        }
+
+        .feature-grid,
+        .integrations {
+          grid-template-columns: 1fr;
+        }
+
+        .product-frame {
+          margin-inline: -6px;
+        }
+
+        .package-row {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "SoftwareApplication",
+        "name": "Parcel Tracker",
+        "applicationCategory": "ProductivityApplication",
+        "operatingSystem": "Docker, Node.js",
+        "description": "A local-first package tracking and automation app that scans your inbox for delivery emails, extracts tracking numbers, and routes package events to your tools.",
+        "softwareRequirements": "Docker or Node.js, IMAP mailbox credentials",
+        "offers": {
+          "@type": "Offer",
+          "price": "0",
+          "priceCurrency": "USD"
+        }
+      }
+    </script>
+  </head>
+  <body>
+    <header class="site-header">
+      <div class="wrap nav">
+        <a class="brand" href="#top" aria-label="Parcel Tracker home">
+          <span class="brand-mark">P</span>
+          <span>Parcel Tracker</span>
+        </a>
+        <nav class="nav-links" aria-label="Primary navigation">
+          <a href="#how-it-works">How it works</a>
+          <a href="#different">Why different</a>
+          <a href="#integrations">Integrations</a>
+          <a href="#faq">FAQ</a>
+        </nav>
+        <a class="button primary" href="https://github.com/steveafrost/parcel-tracker">View on GitHub</a>
+      </div>
+    </header>
+
+    <main id="top">
+      <section class="hero">
+        <div class="wrap hero-grid">
+          <div>
+            <h1>Own your delivery data.</h1>
+            <p class="hero-copy">Parcel Tracker scans your inbox locally, finds package tracking numbers, and routes delivery events to the tools you already use. No shopping feed. No ad funnel. No mystery parser.</p>
+            <div class="hero-actions">
+              <a class="button primary" href="https://github.com/steveafrost/parcel-tracker">Start with Docker</a>
+              <a class="button secondary" href="#how-it-works">See how it works</a>
+            </div>
+            <ul class="proof-list" aria-label="Product highlights">
+              <li><span class="check">✓</span>Runs locally with Docker and SQLite</li>
+              <li><span class="check">✓</span>Detects UPS, FedEx, USPS, Amazon, DHL, OnTrac, and LaserShip</li>
+              <li><span class="check">✓</span>Emits webhooks for package and review events</li>
+            </ul>
+          </div>
+
+          <div class="product-frame" aria-label="Parcel Tracker dashboard preview">
+            <div class="app-topbar">
+              <div class="window-dots" aria-hidden="true"><span></span><span></span><span></span></div>
+              <div class="app-title">Local package operations</div>
+            </div>
+            <div class="mock-app">
+              <aside class="sidebar" aria-label="Preview navigation">
+                <div class="side-item active">Deliveries</div>
+                <div class="side-item">Review Queue</div>
+                <div class="side-item">Automations</div>
+                <div class="side-item">History</div>
+                <div class="side-item">Settings</div>
+              </aside>
+              <div class="main-panel">
+                <div class="panel-head">
+                  <div>
+                    <h2>Recent deliveries</h2>
+                    <p class="section-copy">Inbox scan completed two minutes ago.</p>
+                  </div>
+                  <span class="status-pill">2 need review</span>
+                </div>
+                <div class="package-list">
+                  <div class="package-row">
+                    <div>
+                      <strong>Target: Your order has shipped</strong>
+                      <span>FedEx · 518120992083 · source: oe.target.com</span>
+                    </div>
+                    <div class="confidence high">High</div>
+                  </div>
+                  <div class="package-row">
+                    <div>
+                      <strong>Methodical Coffee: Your order has been received</strong>
+                      <span>USPS · 9434650899562176786441 · saved locally</span>
+                    </div>
+                    <div class="confidence high">High</div>
+                  </div>
+                  <div class="package-row">
+                    <div>
+                      <strong>Unknown sender: possible DHL delivery</strong>
+                      <span>Low confidence · held before sync · review tracking context</span>
+                    </div>
+                    <div class="confidence review">Review</div>
+                  </div>
+                  <div class="package-row">
+                    <div>
+                      <strong>Webhook event prepared</strong>
+                      <span>delivery.detected · Home Assistant and reminders ready</span>
+                    </div>
+                    <div class="confidence high">Ready</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="how-it-works">
+        <div class="wrap section-grid">
+          <div>
+            <h2>How people start using it</h2>
+            <p class="section-copy">Parcel Tracker is designed for a five-minute local install today, and a fuller connected app tomorrow.</p>
+          </div>
+          <div class="steps">
+            <article class="step">
+              <div class="step-number">1</div>
+              <div>
+                <h3>Connect a mailbox</h3>
+                <p>Start with iCloud IMAP credentials. Gmail, Outlook, generic IMAP, and forwarding ingestion are planned product paths.</p>
+              </div>
+            </article>
+            <article class="step">
+              <div class="step-number">2</div>
+              <div>
+                <h3>Scan for delivery signals</h3>
+                <p>The parser finds tracking numbers, carriers, retailers, subjects, order hints, and suspicious low-confidence matches.</p>
+              </div>
+            </article>
+            <article class="step">
+              <div class="step-number">3</div>
+              <div>
+                <h3>Review and route events</h3>
+                <p>Trust high-confidence packages, review uncertain detections, and route events to Parcel, webhooks, reminders, or automation tools.</p>
+              </div>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section id="different">
+        <div class="wrap">
+          <div class="section-grid">
+            <div>
+              <h2>Not another shopping app</h2>
+              <p class="section-copy">Most package apps want to become the place you shop or the cloud that receives your order emails. Parcel Tracker is the layer you own.</p>
+            </div>
+            <div class="feature-grid">
+              <article class="feature">
+                <h3>Local-first</h3>
+                <p>Your package history lives in your database. The app can run on your own machine or server.</p>
+              </article>
+              <article class="feature">
+                <h3>Auditable parsing</h3>
+                <p>Every detection can expose the source email, matched pattern, inferred carrier, and confidence level.</p>
+              </article>
+              <article class="feature">
+                <h3>Automation-native</h3>
+                <p>Package events should become webhooks, reminders, Home Assistant signals, chat alerts, or custom API calls.</p>
+              </article>
+              <article class="feature">
+                <h3>Bring your tracker</h3>
+                <p>Sync to Parcel when you want a polished tracking app. Keep the local source of truth when you want control.</p>
+              </article>
+              <article class="feature">
+                <h3>Review queue</h3>
+                <p>Low-confidence numbers can be held before they pollute your tracker or trigger automations.</p>
+              </article>
+              <article class="feature">
+                <h3>Searchable history</h3>
+                <p>Build a private archive of deliveries, retailers, carriers, and order metadata over time.</p>
+              </article>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="integrations">
+        <div class="wrap section-grid">
+          <div>
+            <h2>Designed to route delivery events anywhere</h2>
+            <p class="section-copy">Parcel sync is optional. The larger product is a package-event router for personal infrastructure.</p>
+          </div>
+          <div class="integrations" aria-label="Planned and current integrations">
+            <div class="integration">Parcel</div>
+            <div class="integration">Webhooks</div>
+            <div class="integration">Home Assistant</div>
+            <div class="integration">Apple Reminders</div>
+            <div class="integration">ntfy</div>
+            <div class="integration">Slack</div>
+            <div class="integration">Discord</div>
+            <div class="integration">Calendar</div>
+          </div>
+        </div>
+      </section>
+
+      <section id="faq">
+        <div class="wrap section-grid">
+          <div>
+            <h2>Questions people ask first</h2>
+            <p class="section-copy">The current release is an early self-hosted app. The public product direction is broader: private package detection, review, routing, and history.</p>
+          </div>
+          <div class="faq-list">
+            <article class="faq">
+              <h3>Is this a replacement for Parcel?</h3>
+              <p>No. It works as a local tracker first and can sync to Parcel when configured. Long term, it should be the local source of truth and automation layer around whatever tracker you prefer.</p>
+            </article>
+            <article class="faq">
+              <h3>Does it need access to my email?</h3>
+              <p>Today it connects to iCloud over IMAP with an app-specific password. Future versions should support OAuth providers and email forwarding.</p>
+            </article>
+            <article class="faq">
+              <h3>Where is my data stored?</h3>
+              <p>The current Docker app stores package metadata in local SQLite. The product direction keeps local ownership as a core promise.</p>
+            </article>
+            <article class="faq">
+              <h3>Can it trigger automations?</h3>
+              <p>Yes. The app can emit signed webhooks for package and review events, and destination-specific connectors can build on that event layer.</p>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section class="cta-band">
+        <div class="wrap cta-content">
+          <div>
+            <h2>Run your own package hub.</h2>
+            <p>Start with Docker, connect your mailbox, and turn shipping emails into clean package data you control.</p>
+          </div>
+          <a class="button" href="https://github.com/steveafrost/parcel-tracker">View the repository</a>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <div class="wrap footer-row">
+        <span>Parcel Tracker is a local-first package tracking and automation project.</span>
+        <a href="llms.txt">LLM summary</a>
+      </div>
+    </footer>
+  </body>
+</html>

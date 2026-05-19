@@ -33,7 +33,7 @@ describe('Email Parser', () => {
       expect(result?.trackingNumber).toBe('TBA123456789012');
       expect(result?.carrier).toBe('Amazon');
       expect(result?.retailer).toBe('Amazon');
-      expect(result?.productName).toBe('Amazon.com');
+      expect(result?.productName).toBe('Your Amazon.com order has shipped');
     });
 
     test('parses UPS shipping email', () => {
@@ -48,6 +48,52 @@ describe('Email Parser', () => {
       const result = parseEmail(email);
       expect(result?.trackingNumber).toBe('1Z999AA10123456784');
       expect(result?.carrier).toBe('UPS');
+      expect(result?.productName).toBe('UPS Delivery Notification');
+    });
+
+    test('uses display sender name for generic shipment subjects', () => {
+      const email: ParsedEmail = {
+        messageId: '<target@example.com>',
+        from: 'noreply@oe.target.com',
+        fromName: 'Target',
+        subject: 'Your order has shipped',
+        body: 'Tracking number 518120992083',
+        date: new Date(),
+      };
+
+      const result = parseEmail(email);
+      expect(result?.trackingNumber).toBe('518120992083');
+      expect(result?.carrier).toBe('FedEx');
+      expect(result?.retailer).toBe('Target');
+      expect(result?.productName).toBe('Target: Your order has shipped');
+    });
+
+    test('does not extract order status words as order numbers', () => {
+      const email: ParsedEmail = {
+        messageId: '<coffee@example.com>',
+        from: 'shipping@methodicalcoffee.com',
+        subject: 'Your order has been received',
+        body: 'USPS Tracking # 9434650899562176786441',
+        date: new Date(),
+      };
+
+      const result = parseEmail(email);
+      expect(result?.trackingNumber).toBe('9434650899562176786441');
+      expect(result?.productName).toBe('Methodical Coffee: Your order has been received');
+      expect(result?.orderNumber).toBeNull();
+    });
+
+    test('falls back to readable domain titles when no display name exists', () => {
+      const email: ParsedEmail = {
+        messageId: '<ship@example.com>',
+        from: 'shipping@blackwhiteroasters.com',
+        subject: 'Tracking update',
+        body: 'USPS Tracking # 9205590267338801847124',
+        date: new Date(),
+      };
+
+      const result = parseEmail(email);
+      expect(result?.productName).toBe('Black & White Roasters: Tracking update');
     });
 
     test('returns null when no tracking found', () => {

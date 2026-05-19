@@ -592,6 +592,17 @@
             cursor: not-allowed;
         }
 
+        .approve-btn {
+            background: var(--success);
+            color: white;
+            border-color: var(--success);
+        }
+
+        .approve-btn:hover {
+            background: #1f3f0f;
+            color: white;
+        }
+
         .success-message {
             background: rgba(45, 80, 22, 0.08);
             border: 1px solid rgba(45, 80, 22, 0.3);
@@ -754,16 +765,24 @@
             <div class="card api-card">
                 <div class="card-header">
                     <div class="card-icon">⚡</div>
-                    <div class="card-label">API Quota</div>
+                    <div class="card-label">Parcel Sync</div>
                 </div>
-                <div class="card-value small" id="apiRequests">
-                    0<span style="font-size: 16px; color: var(--ink-light);">/20</span>
+                <div class="card-value small" id="parcelSyncStatus">
+                    Checking
                 </div>
             </div>
         </div>
 
         <div id="rateLimitContainer"></div>
         <div id="errorContainer"></div>
+
+        <div class="section-header">
+            <h2 class="section-title">⚠ Review Queue</h2>
+        </div>
+
+        <div class="packages-grid" id="reviewGrid">
+            <!-- Review items will be loaded here -->
+        </div>
 
         <div class="section-header">
             <h2 class="section-title">📋 Recent Deliveries</h2>
@@ -778,9 +797,9 @@
         </footer>
     </div>
 
-    <script>
+        <script>
         let autoRefreshInterval;
-        let apiRequestCount = 0;
+        let parcelSyncEnabled = false;
 
         async function checkHealth() {
             try {
@@ -788,6 +807,7 @@
                 const data = await response.json();
 
                 if (response.ok) {
+                    parcelSyncEnabled = Boolean(data.parcelSyncEnabled);
                     const badge = document.getElementById('statusBadge');
                     const dot = document.getElementById('statusDot');
                     const text = document.getElementById('statusText');
@@ -796,6 +816,7 @@
                     badge.classList.add('online');
                     dot.style.color = 'var(--success)';
                     text.textContent = 'Online';
+                    updateParcelSyncDisplay();
                     return true;
                 }
             } catch (error) {
@@ -810,6 +831,7 @@
             badge.classList.add('offline');
             dot.style.color = 'var(--error)';
             text.textContent = 'Offline';
+            updateParcelSyncDisplay();
             return false;
         }
 
@@ -820,37 +842,25 @@
                     const stats = await response.json();
                     document.getElementById('emailsRead').textContent = stats.emailsRead || 0;
                     document.getElementById('packagesCreated').textContent = stats.packagesCreated || 0;
-                    
-                    apiRequestCount = stats.packagesCreated || 0;
-                    updateApiDisplay();
                 }
             } catch (error) {
                 console.error('Failed to load stats:', error);
             }
         }
 
-        function updateApiDisplay() {
-            const apiElement = document.getElementById('apiRequests');
-            apiElement.innerHTML = `${apiRequestCount}<span style="font-size: 16px; color: var(--ink-light);">/20</span>`;
-            
+        function updateParcelSyncDisplay() {
+            const syncElement = document.getElementById('parcelSyncStatus');
+            syncElement.textContent = parcelSyncEnabled ? 'On' : 'Local';
+
             const container = document.getElementById('rateLimitContainer');
-            if (apiRequestCount >= 15) {
-                const isCritical = apiRequestCount >= 18;
-                const percentage = (apiRequestCount / 20) * 100;
-                
+            if (!parcelSyncEnabled) {
                 container.innerHTML = `
-                    <div class="rate-limit ${isCritical ? '' : 'warning'}">
-                        <div class="rate-limit-icon">${isCritical ? '🚨' : '⚠️'}</div>
+                    <div class="rate-limit warning">
+                        <div class="rate-limit-icon">ℹ</div>
                         <div class="rate-limit-content">
-                            <div class="rate-limit-title">
-                                ${isCritical ? 'Critical: Daily API Limit Almost Reached' : 'Warning: API Limit Approaching'}
-                            </div>
+                            <div class="rate-limit-title">Local-only mode</div>
                             <div class="rate-limit-text">
-                                You've used ${apiRequestCount} of 20 daily Parcel API requests. 
-                                ${isCritical ? 'Only ' + (20 - apiRequestCount) + ' remaining today.' : ''}
-                                <div class="rate-limit-bar">
-                                    <div class="rate-limit-fill" style="width: ${percentage}%;"></div>
-                                </div>
+                                Parcel sync is not configured. Detected packages are saved locally and shown in this dashboard.
                             </div>
                         </div>
                     </div>
@@ -873,6 +883,7 @@
                 }
 
                 await loadStats();
+                await loadReviewQueue();
 
                 const response = await fetch('/packages');
                 if (!response.ok) {
@@ -893,6 +904,80 @@
             }
         }
 
+        async function loadReviewQueue() {
+            const response = await fetch('/review');
+            if (!response.ok) {
+                throw new Error('Failed to load review queue');
+            }
+
+            const reviewItems = await response.json();
+            displayReviewQueue(reviewItems);
+        }
+
+        function displayReviewQueue(reviewItems) {
+            const grid = document.getElementById('reviewGrid');
+
+            if (reviewItems.length === 0) {
+                grid.innerHTML = `
+                    <div class="empty-state" style="padding: 36px 24px;">
+                        <div class="empty-icon">✓</div>
+                        <h2>No Review Needed</h2>
+                        <p>Medium and low confidence detections will wait here before they become deliveries.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            grid.innerHTML = reviewItems.map(item => `
+                <div class="package-card low-confidence">
+                    <div class="package-header">
+                        <span class="carrier-badge">${escapeHtml(item.carrier)}</span>
+                        <span class="package-date">${new Date(item.createdAt).toLocaleDateString()}</span>
+                    </div>
+
+                    <div class="low-confidence-banner">
+                        <span>⚠</span>
+                        <span>${escapeHtml(item.reason)}</span>
+                    </div>
+
+                    <div class="package-field">
+                        <div class="field-label">Description</div>
+                        <div class="field-value">${escapeHtml(item.productName || 'Unknown Package')}</div>
+                    </div>
+
+                    <div class="package-field">
+                        <div class="field-label">Tracking Candidate</div>
+                        <div class="field-value tracking-number">${escapeHtml(item.trackingNumber)}</div>
+                    </div>
+
+                    <div class="package-field">
+                        <div class="field-label">Confidence</div>
+                        <div class="field-value">
+                            <span class="confidence-indicator confidence-${item.confidence || 'medium'}">
+                                <span class="confidence-dot"></span>
+                                ${item.confidence === 'low' ? 'Low - Review Needed' : 'Medium - Review Needed'}
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="package-field">
+                        <div class="field-label">Source</div>
+                        <div class="field-value">${escapeHtml(item.sourceFrom || 'Unknown sender')}</div>
+                        <div class="field-value" style="color: var(--ink-light); font-size: 13px;">${escapeHtml(item.sourceSubject || '')}</div>
+                    </div>
+
+                    <div class="package-actions" style="gap: 10px;">
+                        <button class="delete-btn approve-btn" onclick="approveReviewItem('${escapeHtml(item.id)}', this)" type="button">
+                            Approve
+                        </button>
+                        <button class="delete-btn" onclick="ignoreReviewItem('${escapeHtml(item.id)}', this)" type="button">
+                            Ignore
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
         function displayPackages(packages) {
             const grid = document.getElementById('packagesGrid');
 
@@ -907,21 +992,12 @@
                 return;
             }
 
-            grid.innerHTML = packages.map(pkg => {
-                const isLowConfidence = pkg.confidence === 'low';
-                return `
-                <div class="package-card ${isLowConfidence ? 'low-confidence' : ''}">
+            grid.innerHTML = packages.map(pkg => `
+                <div class="package-card">
                     <div class="package-header">
                         <span class="carrier-badge">${escapeHtml(pkg.carrier)}</span>
                         <span class="package-date">${new Date(pkg.createdAt).toLocaleDateString()}</span>
                     </div>
-
-                    ${isLowConfidence ? `
-                    <div class="low-confidence-banner">
-                        <span>⚠️</span>
-                        <span>This may not be a valid tracking number. Please verify before checking Parcel.</span>
-                    </div>
-                    ` : ''}
 
                     <div class="package-field">
                         <div class="field-label">Description</div>
@@ -956,12 +1032,52 @@
                         <div class="field-value">${escapeHtml(pkg.orderNumber)}</div>
                     </div>
                     ` : ''}
+
+                    <div class="package-actions">
+                        <button class="delete-btn" onclick="deletePackage('${escapeHtml(pkg.id)}', this)" type="button">
+                            Remove
+                        </button>
+                    </div>
                 </div>
-            `}).join('');
+            `).join('');
+        }
+
+        async function approveReviewItem(id, btn) {
+            await handleReviewAction(id, btn, 'approve');
+        }
+
+        async function ignoreReviewItem(id, btn) {
+            await handleReviewAction(id, btn, 'ignore');
+        }
+
+        async function handleReviewAction(id, btn, action) {
+            btn.disabled = true;
+            btn.textContent = action === 'approve' ? 'Approving...' : 'Ignoring...';
+
+            try {
+                const response = await fetch(`/review/${id}/${action}`, {
+                    method: 'POST'
+                });
+
+                const data = await response.json();
+                if (!response.ok) {
+                    showError(data.error || `Failed to ${action} review item`);
+                    return;
+                }
+
+                showSuccess(data.message);
+                await loadPackages();
+            } catch (error) {
+                console.error(`Failed to ${action} review item:`, error);
+                showError(`Failed to ${action} review item. Please try again.`);
+            } finally {
+                btn.disabled = false;
+                btn.textContent = action === 'approve' ? 'Approve' : 'Ignore';
+            }
         }
 
         async function deletePackage(id, btn) {
-            if (!confirm('Are you sure you want to remove this package from the tracker?\n\nNote: This will not remove it from the Parcel app - you\'ll need to do that manually.')) {
+            if (!confirm('Are you sure you want to remove this package from the tracker?\n\nNote: This will not remove it from any external app.')) {
                 return;
             }
 

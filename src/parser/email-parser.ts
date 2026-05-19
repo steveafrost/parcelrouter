@@ -1,8 +1,9 @@
-import { extractTrackingNumberWithConfidence, extractTrackingNumber, detectCarrier, detectCarrierFromSender, ConfidenceLevel } from './tracking-patterns';
+import { extractTrackingNumberWithConfidence, detectCarrierFromSender, ConfidenceLevel } from './tracking-patterns';
 
 export interface ParsedEmail {
   messageId: string;
   from: string;
+  fromName?: string;
   subject: string;
   body: string;
   date: Date;
@@ -78,8 +79,12 @@ export function parseEmail(email: ParsedEmail): TrackingInfo | null {
   // Extract retailer from sender domain
   const retailer = extractRetailer(email.from);
 
-  // Extract a clean sender name for the product name
-  const senderName = extractSenderName(email.from);
+  // Generate a clean Parcel description from the sender and subject.
+  const productName = generatePackageTitle(email, {
+    retailer,
+    carrier,
+    trackingNumber,
+  });
 
   // Try to extract order number from subject
   const orderNumber = extractOrderNumber(email.subject);
@@ -89,35 +94,14 @@ export function parseEmail(email: ParsedEmail): TrackingInfo | null {
     trackingNumber,
     carrier,
     retailer,
-    productName: senderName,
+    productName,
     orderNumber,
     confidence,
   };
 }
 
-function extractSenderName(from: string): string {
-  // Handle "Name <email@domain.com>" format
-  const nameMatch = from.match(/^"?([^"<]+)"?\s*</);
-  if (nameMatch) {
-    return nameMatch[1].trim();
-  }
-  
-  // If no display name, extract domain from email
-  const emailMatch = from.match(/@([^>]+)/);
-  if (emailMatch) {
-    const domain = emailMatch[1];
-    // Clean up "order." prefix if present
-    const cleanDomain = domain.replace(/^order\./i, '');
-    // Capitalize first letter of domain
-    return cleanDomain.charAt(0).toUpperCase() + cleanDomain.slice(1);
-  }
-  
-  // Fallback to the full from string
-  return from;
-}
-
 function extractRetailer(from: string): string | null {
-  const domain = from.split('@')[1];
+  const domain = extractDomain(from);
   if (!domain) return null;
   
   // Common retailer mappings
@@ -132,10 +116,152 @@ function extractRetailer(from: string): string | null {
     'ebay.com': 'eBay',
     'etsy.com': 'Etsy',
     'shopify.com': 'Shopify',
+    'homedepot.com': 'Home Depot',
+    'costco.com': 'Costco',
+    'chewy.com': 'Chewy',
+    'gamestop.com': 'GameStop',
+    'michaels.com': 'Michaels',
+    'scheels.com': 'Scheels',
+    'vitaminshoppe.com': 'The Vitamin Shoppe',
   };
 
   const mainDomain = domain.toLowerCase().split('.').slice(-2).join('.');
   return retailerMap[mainDomain] || null;
+}
+
+interface TitleContext {
+  retailer: string | null;
+  carrier: string;
+  trackingNumber: string;
+}
+
+function generatePackageTitle(email: ParsedEmail, context: TitleContext): string {
+  const senderTitle = context.retailer || extractSenderName(email);
+  const subjectTitle = cleanSubjectForTitle(email.subject, context.trackingNumber);
+
+  if (subjectTitle) {
+    if (senderTitle && shouldPrefixSubject(subjectTitle, senderTitle, context.carrier)) {
+      return `${senderTitle}: ${subjectTitle}`;
+    }
+    return subjectTitle;
+  }
+
+  if (senderTitle) {
+    return senderTitle;
+  }
+
+  if (context.carrier && context.carrier !== 'Unknown') {
+    return `${context.carrier} delivery`;
+  }
+
+  return 'Package delivery';
+}
+
+function shouldPrefixSubject(subject: string, senderTitle: string, carrier: string): boolean {
+  const normalizedSubject = subject.toLowerCase();
+  const normalizedSender = senderTitle.toLowerCase();
+  const normalizedCarrier = carrier.toLowerCase();
+
+  if (normalizedSubject.includes(normalizedSender) || normalizedSubject.includes(normalizedCarrier)) {
+    return false;
+  }
+
+  const genericSubjectPatterns = [
+    /\byour (order|package|shipment|delivery)\b/i,
+    /\b(order|package|shipment) (confirmed|shipped|delivered|received|arriving|arrived)\b/i,
+    /\b(delivery|tracking) (notification|update|status)\b/i,
+    /\bon its way\b/i,
+  ];
+
+  return genericSubjectPatterns.some(pattern => pattern.test(subject));
+}
+
+function cleanSubjectForTitle(subject: string, trackingNumber: string): string | null {
+  const cleaned = subject
+    .replace(/^(re|fwd?):\s*/gi, '')
+    .replace(new RegExp(escapeRegExp(trackingNumber), 'gi'), '')
+    .replace(/#?\d{3}-\d{7}-\d{7}/g, '')
+    .replace(/\((?:\s|#|order|number|\d|-)*\)/gi, '')
+    .replace(/\btracking\s*(?:number|#|no\.?)?\s*:?\s*$/i, '')
+    .replace(/\s+/g, ' ')
+    .replace(/\s+([:,.!?])/g, '$1')
+    .replace(/[:,-]\s*$/g, '')
+    .trim();
+
+  if (!cleaned || cleaned.length < 4) {
+    return null;
+  }
+
+  return cleaned;
+}
+
+function extractSenderName(email: ParsedEmail): string | null {
+  const displayName = cleanDisplayName(email.fromName);
+  if (displayName) {
+    return displayName;
+  }
+
+  const inlineNameMatch = email.from.match(/^"?([^"<@]+)"?\s*</);
+  const inlineName = cleanDisplayName(inlineNameMatch?.[1]);
+  if (inlineName) {
+    return inlineName;
+  }
+
+  const domain = extractDomain(email.from);
+  if (!domain) {
+    return null;
+  }
+
+  return titleFromDomain(domain);
+}
+
+function cleanDisplayName(name: string | undefined): string | null {
+  if (!name) return null;
+
+  const cleaned = name
+    .replace(/^"+|"+$/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+
+  if (!cleaned || cleaned.includes('@') || /^no[-\s]?reply$/i.test(cleaned)) {
+    return null;
+  }
+
+  return cleaned;
+}
+
+function extractDomain(from: string): string | null {
+  const emailMatch = from.match(/@([^>\s]+)/);
+  if (!emailMatch) return null;
+  return emailMatch[1].toLowerCase().replace(/[),.;]+$/g, '');
+}
+
+function titleFromDomain(domain: string): string {
+  const labels = domain.split('.').filter(Boolean);
+  const secondLevel = labels.length >= 2 ? labels[labels.length - 2] : labels[0] || domain;
+
+  const domainBrandMap: Record<string, string> = {
+    apolloautomation: 'Apollo Automation',
+    blackwhiteroasters: 'Black & White Roasters',
+    methodicalcoffee: 'Methodical Coffee',
+    privaterelay: 'Private Relay',
+    saviorequipment: 'Savior Equipment',
+    shipstation: 'ShipStation',
+    steadyrack: 'Steadyrack',
+  };
+
+  if (domainBrandMap[secondLevel]) {
+    return domainBrandMap[secondLevel];
+  }
+
+  return secondLevel
+    .replace(/[-_]+/g, ' ')
+    .replace(/([a-z])([A-Z])/g, '$1 $2')
+    .replace(/\b\w/g, char => char.toUpperCase());
+}
+
+function escapeRegExp(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
 function extractOrderNumber(subject: string): string | null {
@@ -143,7 +269,8 @@ function extractOrderNumber(subject: string): string | null {
   const patterns = [
     /#(\d{3}-\d{7}-\d{7})/,  // Amazon format
     /#(\d{9,})/,              // Generic long number
-    /order[:\s#]+([A-Z0-9]{6,})/i,  // Order followed by alphanumeric
+    /order\s*(?:number|no\.?|#|id)?[:#]\s*([A-Z0-9-]{6,})/i,
+    /\border\s+(?:number|no\.?|id)\s+([A-Z0-9-]{6,})/i,
     /#([A-Z]{2,}\d{6,})/i,    // #XX123456 format
   ];
 

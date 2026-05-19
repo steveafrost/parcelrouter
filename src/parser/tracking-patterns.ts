@@ -54,9 +54,10 @@ const TRACKING_CONTEXT_KEYWORDS = [
 
 // Patterns that indicate an order number (should be excluded)
 const ORDER_NUMBER_PATTERNS = [
-  /order[:\s#]*([A-Z0-9-]+)/i,
-  /po[:\s#]*([A-Z0-9-]+)/i,
-  /purchase[:\s#]*([A-Z0-9-]+)/i,
+  /order\s*(?:number|no\.?|#|id)?[:#]\s*([A-Z0-9-]{6,})/i,
+  /\border\s+(?:number|no\.?|id)\s+([A-Z0-9-]{6,})/i,
+  /\bpo\s*(?:number|no\.?|#)?[:#]\s*([A-Z0-9-]{6,})/i,
+  /\bpurchase\s*(?:number|no\.?|#|id)?[:#]\s*([A-Z0-9-]{6,})/i,
   /#\s*(\d{3}-\d{7}-\d{7})/, // Amazon order format
 ];
 

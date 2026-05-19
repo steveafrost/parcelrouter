@@ -8,7 +8,7 @@ dotenv.config();
 
 // Validate required environment variables
 function validateEnv(): void {
-  const required = ['IMAP_USER', 'IMAP_PASS', 'PARCEL_API_KEY'];
+  const required = ['IMAP_USER', 'IMAP_PASS'];
   const missing = required.filter(key => !process.env[key]);
   
   if (missing.length > 0) {
@@ -30,7 +30,7 @@ async function main(): Promise<void> {
       user: process.env.IMAP_USER!,
       password: process.env.IMAP_PASS!,
     },
-    parcelApiKey: process.env.PARCEL_API_KEY!,
+    parcelApiKey: process.env.PARCEL_API_KEY,
     pollIntervalMinutes: parseInt(process.env.POLL_INTERVAL || '3600', 10) / 60,
     folders: [
       { name: 'INBOX' },
@@ -46,6 +46,7 @@ async function main(): Promise<void> {
   
   createScheduler(config, cronExpression);
   console.log(`Scheduler started with ${cronMinutes} minute interval`);
+  console.log(process.env.PARCEL_API_KEY ? 'Parcel sync enabled' : 'Parcel sync disabled; packages will stay local');
 
   // Start the API server
   const port = parseInt(process.env.PORT || '3000', 10);

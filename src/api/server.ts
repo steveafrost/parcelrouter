@@ -3,10 +3,13 @@ import path from 'path';
 import fs from 'fs';
 import { getDb, initDb } from '../db/connection';
 import { PackageRepository } from '../db/repositories/package-repository';
+import { ReviewRepository } from '../db/repositories/review-repository';
 import { StatsRepository } from '../db/repositories/stats-repository';
+import { createWebhookDispatcherFromEnv } from '../webhooks/dispatcher';
 
 export function createServer(): express.Express {
   const app = express();
+  const webhookDispatcher = createWebhookDispatcherFromEnv();
   
   app.use(express.json());
   
@@ -33,7 +36,12 @@ export function createServer(): express.Express {
   
   // Health check
   app.get('/health', (req, res) => {
-    res.json({ status: 'ok', timestamp: new Date().toISOString() });
+    res.json({
+      status: 'ok',
+      timestamp: new Date().toISOString(),
+      parcelSyncEnabled: Boolean(process.env.PARCEL_API_KEY),
+      webhookEnabled: webhookDispatcher.enabled,
+    });
   });
   
   // Get stats
@@ -59,6 +67,93 @@ export function createServer(): express.Express {
       res.status(500).json({ error: 'Failed to fetch packages' });
     }
   });
+
+  // List pending review items
+  app.get('/review', (req, res) => {
+    try {
+      const db = getDb();
+      const repo = new ReviewRepository(db);
+      res.json(repo.findPending());
+    } catch (error) {
+      res.status(500).json({ error: 'Failed to fetch review queue' });
+    }
+  });
+
+  // Approve review item and create package
+  app.post('/review/:id/approve', async (req, res) => {
+    try {
+      const db = getDb();
+      const reviewRepo = new ReviewRepository(db);
+      const packageRepo = new PackageRepository(db);
+      const item = reviewRepo.findById(req.params.id);
+
+      if (!item || item.status !== 'pending') {
+        return res.status(404).json({ error: 'Review item not found' });
+      }
+
+      if (packageRepo.exists(item.trackingNumber)) {
+        reviewRepo.updateStatus(item.id, 'approved');
+        const existingPackage = packageRepo.findByTrackingNumber(item.trackingNumber);
+        await webhookDispatcher.dispatch('review.approved', {
+          reviewItem: item,
+          package: existingPackage,
+          alreadyExisted: true,
+        });
+        return res.json({
+          success: true,
+          message: 'Review item approved; package already existed',
+          package: existingPackage,
+        });
+      }
+
+      const pkg = packageRepo.create({
+        trackingNumber: item.trackingNumber,
+        carrier: item.carrier,
+        retailer: item.retailer,
+        productName: item.productName,
+        orderNumber: item.orderNumber,
+        emailMessageId: item.emailMessageId,
+        confidence: item.confidence,
+      });
+
+      reviewRepo.updateStatus(item.id, 'approved');
+      await webhookDispatcher.dispatch('review.approved', {
+        reviewItem: item,
+        package: pkg,
+        alreadyExisted: false,
+      });
+      await webhookDispatcher.dispatch('package.created', {
+        package: pkg,
+        source: {
+          reviewItemId: item.id,
+        },
+      });
+      res.json({ success: true, message: 'Review item approved', package: pkg });
+    } catch (error) {
+      res.status(500).json({ error: 'Failed to approve review item' });
+    }
+  });
+
+  // Ignore review item
+  app.post('/review/:id/ignore', async (req, res) => {
+    try {
+      const db = getDb();
+      const repo = new ReviewRepository(db);
+      const item = repo.findById(req.params.id);
+
+      if (!item || item.status !== 'pending') {
+        return res.status(404).json({ error: 'Review item not found' });
+      }
+
+      repo.updateStatus(item.id, 'ignored');
+      await webhookDispatcher.dispatch('review.ignored', {
+        reviewItem: item,
+      });
+      res.json({ success: true, message: 'Review item ignored' });
+    } catch (error) {
+      res.status(500).json({ error: 'Failed to ignore review item' });
+    }
+  });
   
   // Get single package
   app.get('/packages/:id', (req, res) => {
@@ -78,7 +173,7 @@ export function createServer(): express.Express {
   });
 
   // Delete package
-  app.delete('/packages/:id', (req, res) => {
+  app.delete('/packages/:id', async (req, res) => {
     try {
       const db = getDb();
       const repo = new PackageRepository(db);
@@ -93,10 +188,13 @@ export function createServer(): express.Express {
       const deleted = repo.delete(req.params.id);
       
       if (deleted) {
+        await webhookDispatcher.dispatch('package.deleted', {
+          package: pkg,
+        });
         res.json({ 
           success: true, 
           message: 'Package removed from tracker',
-          note: 'Please manually remove from Parcel app if needed'
+          note: 'If this package was synced to another app, remove it there too if needed'
         });
       } else {
         res.status(500).json({ error: 'Failed to delete package' });
@@ -141,7 +239,7 @@ export function createServer(): express.Express {
       error: 'Not found',
       path: req.path,
       method: req.method,
-      availableRoutes: ['/health', '/packages', '/']
+      availableRoutes: ['/health', '/stats', '/packages', '/review', '/']
     });
   });
 

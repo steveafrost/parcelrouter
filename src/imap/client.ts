@@ -1,4 +1,4 @@
-import imaps from 'imap-simple';
+import { ImapFlow } from 'imapflow';
 import { ParsedEmail } from '../parser/email-parser';
 
 export interface ImapConfig {
@@ -9,38 +9,39 @@ export interface ImapConfig {
 }
 
 export class ImapClient {
-  private connection: imaps.ImapSimple | null = null;
+  private connection: ImapFlow | null = null;
 
   constructor(private config: ImapConfig) {}
 
   async connect(): Promise<void> {
-    const config = {
-      imap: {
-        user: this.config.user,
-        password: this.config.password,
-        host: this.config.host,
-        port: this.config.port,
-        tls: true,
-        tlsOptions: {
-          rejectUnauthorized: false, // Allow self-signed certs for iCloud
-        },
-        authTimeout: 30000,
+    this.connection = new ImapFlow({
+      host: this.config.host,
+      port: this.config.port,
+      secure: true,
+      tls: {
+        rejectUnauthorized: false, // Allow self-signed certs for iCloud
       },
-    };
+      auth: {
+        user: this.config.user,
+        pass: this.config.password,
+      },
+      connectionTimeout: 30000,
+      logger: false,
+    });
 
-    this.connection = await imaps.connect(config);
+    await this.connection.connect();
   }
 
   async openFolder(folderName: string = 'INBOX'): Promise<void> {
     if (!this.connection) {
       throw new Error('Not connected to IMAP server');
     }
-    await this.connection.openBox(folderName);
+    await this.connection.mailboxOpen(folderName);
   }
 
   async disconnect(): Promise<void> {
     if (this.connection) {
-      await this.connection.end();
+      await this.connection.logout();
       this.connection = null;
     }
   }
@@ -50,60 +51,29 @@ export class ImapClient {
       throw new Error('Not connected to IMAP server');
     }
 
-    // Search for emails since the given date
-    const searchCriteria = [
-      ['SINCE', since.toISOString().split('T')[0]], // Format: YYYY-MM-DD
-    ];
+    const messageIds = await this.connection.search({ since });
+    if (!messageIds || messageIds.length === 0) {
+      return [];
+    }
 
-    const fetchOptions = {
-      bodies: ['HEADER', 'TEXT'],
-      struct: true,
-    };
-
-    const messages = await this.connection.search(searchCriteria, fetchOptions);
     const emails: ParsedEmail[] = [];
 
-    for (const message of messages) {
-      const header = message.parts.find(part => part.which === 'HEADER');
-      const text = message.parts.find(part => part.which === 'TEXT');
-
-      if (!header || !text) continue;
-
-      const headers = header.body;
-      const messageId = headers['message-id']?.[0] || '';
-      const fromHeader = headers.from?.[0] || '';
-      const subject = headers.subject?.[0] || '';
-      const dateStr = headers.date?.[0];
-      const date = dateStr ? new Date(dateStr) : new Date();
-
-      // Extract email address from "Name <email@domain.com>" format
-      const from = this.extractEmailAddress(fromHeader);
-      
-      // Get email body text
-      const body = typeof text.body === 'string' ? text.body : '';
+    for await (const message of this.connection.fetch(messageIds, {
+      envelope: true,
+      source: true,
+    })) {
+      const fromAddress = message.envelope?.from?.[0];
 
       emails.push({
-        messageId,
-        from,
-        subject,
-        body,
-        date,
+        messageId: message.envelope?.messageId || '',
+        from: fromAddress?.address || '',
+        fromName: fromAddress?.name || undefined,
+        subject: message.envelope?.subject || '',
+        body: message.source?.toString('utf8') || '',
+        date: message.envelope?.date || new Date(),
       });
     }
 
     return emails;
-  }
-
-  private extractEmailAddress(fromHeader: string): string {
-    // Match email in format "Name <email@domain.com>" or just "email@domain.com"
-    const match = fromHeader.match(/<([^>]+)>/);
-    if (match) {
-      return match[1];
-    }
-    // If no angle brackets, assume it's just the email
-    if (fromHeader.includes('@')) {
-      return fromHeader.trim();
-    }
-    return '';
   }
 }

@@ -1,83 +1,194 @@
 # Parcel Tracker
 
-A self-hosted package tracking service that automatically reads shipping emails from iCloud Mail and submits tracking numbers to [Parcel](https://parcel.app/).
+Parcel Tracker is a local-first package tracking and automation app for your inbox.
 
-## Features
+It reads shipping emails from your mailbox, extracts tracking numbers, stores package metadata locally, and can sync deliveries to Parcel or your own automations. The goal is not to be another shopping app. The goal is to give you a private package operations hub you control.
 
-- 📧 **IMAP Email Monitoring** - Connects to iCloud Mail via IMAP
-- 🔍 **Smart Tracking Extraction** - Automatically detects tracking numbers from UPS, FedEx, USPS, Amazon, DHL, and more
-- 📦 **Auto-Submit to Parcel** - Automatically adds tracking to your Parcel account
-- 🐳 **Docker Support** - Easy deployment with Docker Compose
-- 🔄 **Scheduled Polling** - Checks for new emails on a configurable interval
-- 🌐 **REST API** - Simple HTTP API for viewing tracked packages
+## Who It Is For
 
-## Quick Start
+- Self-hosting users who want package tracking without handing order emails to another cloud service.
+- Home automation users who want package events in webhooks, Home Assistant, reminders, or chat.
+- Heavy online shoppers who want a searchable delivery history.
+- Developers who want a local delivery-event API.
+
+## What It Does Today
+
+- Monitors iCloud Mail over IMAP.
+- Polls INBOX and Archive folders on a schedule.
+- Extracts tracking numbers for UPS, FedEx, USPS, Amazon Logistics, DHL, OnTrac, and LaserShip.
+- Generates cleaner package titles from sender, subject, retailer, and tracking context.
+- Scores detections with high, medium, or low confidence.
+- Sends medium and low confidence detections to a review queue before they become deliveries.
+- Stores packages and polling state in SQLite.
+- Shows a local dashboard.
+- Exposes a small REST API.
+- Optionally syncs detected packages to the Parcel app through the Parcel API.
+- Optionally emits package and review events to a webhook endpoint.
+- Runs with Docker Compose.
+
+## How People Start Using It
+
+### 1. Clone The App
 
 ```bash
 git clone https://github.com/steveafrost/parcel-tracker.git
 cd parcel-tracker
-cp .env.example .env
-# Edit .env with your credentials, then:
-docker-compose up -d
 ```
 
-Open http://localhost:9001
+### 2. Create A Local Environment File
 
-📖 **For detailed setup instructions**, see [SETUP.md](./SETUP.md)
+```bash
+cp .env.example .env
+```
 
-## API Endpoints
+Edit `.env`:
+
+```bash
+IMAP_HOST=imap.mail.me.com
+IMAP_PORT=993
+IMAP_USER=your.email@icloud.com
+IMAP_PASS=your-apple-app-specific-password
+PARCEL_API_KEY=
+WEBHOOK_URL=
+WEBHOOK_SECRET=
+POLL_INTERVAL=3600
+```
+
+You need:
+
+- An iCloud app-specific password.
+- Optionally, a Parcel Premium API key if you want Parcel sync.
+- Optionally, a webhook endpoint if you want delivery events in Home Assistant, n8n, Zapier, ntfy bridges, or your own tools.
+
+See [SETUP.md](./SETUP.md) for the full setup guide.
+
+### 3. Start It
+
+Check your configuration before starting the app:
+
+```bash
+npm ci
+npm run setup:check
+```
+
+```bash
+docker-compose up -d --build
+```
+
+Open:
+
+```text
+http://localhost:9001
+```
+
+### 4. Review Packages
+
+The dashboard shows:
+
+- Service health.
+- Emails scanned.
+- Packages found.
+- Parcel sync mode: local-only or enabled.
+- Recent deliveries.
+- Review queue for uncertain detections.
+- Confidence indicators for each detection.
+
+Medium and low-confidence detections wait in the review queue before they become deliveries.
+
+## API
 
 | Endpoint | Method | Description |
-|----------|--------|-------------|
+| --- | --- | --- |
 | `/health` | GET | Health check |
-| `/packages` | GET | List all tracked packages |
-| `/packages/:id` | GET | Get specific package details |
+| `/stats` | GET | Email and package counts |
+| `/packages` | GET | List tracked packages |
+| `/packages/:id` | GET | Get one package |
+| `/packages/:id` | DELETE | Remove a package from the local tracker |
+| `/review` | GET | List pending review items |
+| `/review/:id/approve` | POST | Approve a review item and create a package |
+| `/review/:id/ignore` | POST | Ignore a review item |
 
-## Supported Carriers
+## Webhooks
 
-- UPS
-- FedEx
-- USPS
-- Amazon Logistics
-- DHL
-- OnTrac
-- LaserShip
+Set `WEBHOOK_URL` to receive package and review events:
+
+```bash
+WEBHOOK_URL=https://example.com/parcel-tracker-webhook
+WEBHOOK_SECRET=choose-a-long-random-secret
+WEBHOOK_TIMEOUT_MS=5000
+```
+
+Each event is sent as JSON:
+
+```json
+{
+  "event": "package.created",
+  "timestamp": "2026-05-19T12:00:00.000Z",
+  "data": {
+    "package": {
+      "trackingNumber": "1Z999AA10123456784",
+      "carrier": "UPS"
+    }
+  }
+}
+```
+
+Supported events:
+
+- `package.created`
+- `package.deleted`
+- `review.created`
+- `review.approved`
+- `review.ignored`
+- `parcel.synced`
+- `parcel.sync_failed`
+
+When `WEBHOOK_SECRET` is set, requests include `X-Parcel-Tracker-Signature` with a `sha256=` HMAC of the JSON body.
 
 ## Development
 
 ```bash
-# Install dependencies
-npm install
-
-# Run tests
+npm ci
+npm run setup:check
 npm test
-
-# Run in development mode
-npm run dev
-
-# Build for production
 npm run build
+npm run dev
 ```
+
+Integration tests are skipped by default unless credentials are present.
+
+```bash
+SKIP_IMAP_TESTS=true SKIP_PARCEL_TESTS=true npm test -- --runInBand
+```
+
+## Marketing Site
+
+The crawlable static marketing page lives in [site/index.html](./site/index.html). It is intentionally plain static HTML/CSS so it can be hosted anywhere and indexed easily.
+
+When a public domain is chosen, add:
+
+- A canonical URL in `site/index.html`.
+- A production `site/sitemap.xml`.
+- The deployed site URL to `site/robots.txt`.
+
+## Product Direction
+
+See [docs/product-strategy.md](./docs/product-strategy.md) for the product positioning, competitive map, and roadmap.
+
+The short version:
+
+> Own your delivery data. Automatically find packages from your email, review uncertain matches, and sync delivery events to the tools you already use.
 
 ## Architecture
 
-```
-┌─────────────┐     ┌──────────────┐     ┌────────────────┐
-│   IMAP      │────▶│   Email      │────▶│   Tracking     │
-│   Poller    │     │   Parser     │     │   Extractor    │
-└─────────────┘     └──────────────┘     └────────────────┘
-                                                  │
-                                                  ▼
-┌─────────────┐     ┌──────────────┐     ┌────────────────┐
-│   Parcel    │◀────│   SQLite     │◀────│   Package      │
-│   API       │     │   Database   │     │   Repository   │
-└─────────────┘     └──────────────┘     └────────────────┘
-                           │
-                           ▼
-                    ┌──────────────┐
-                    │   Express    │
-                    │   API Server │
-                    └──────────────┘
+```text
+IMAP mailbox
+  -> Email poller
+  -> Parser and tracking extractor
+  -> High confidence packages or review queue
+  -> SQLite database
+  -> Local dashboard and REST API
+  -> Optional Parcel sync / webhooks and automations
 ```
 
 ## License

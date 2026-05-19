@@ -16,6 +16,27 @@ CREATE TABLE IF NOT EXISTS tracked_packages (
 CREATE INDEX IF NOT EXISTS idx_tracking_number ON tracked_packages(tracking_number);
 CREATE INDEX IF NOT EXISTS idx_parcel_id ON tracked_packages(parcel_package_id);
 
+-- Review queue for uncertain tracking detections
+CREATE TABLE IF NOT EXISTS review_items (
+  id TEXT PRIMARY KEY,
+  tracking_number TEXT NOT NULL,
+  carrier TEXT NOT NULL,
+  retailer TEXT,
+  product_name TEXT,
+  order_number TEXT,
+  email_message_id TEXT UNIQUE,
+  source_from TEXT,
+  source_subject TEXT,
+  confidence TEXT NOT NULL,
+  reason TEXT NOT NULL,
+  status TEXT NOT NULL DEFAULT 'pending',
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_review_status ON review_items(status);
+CREATE INDEX IF NOT EXISTS idx_review_tracking_number ON review_items(tracking_number);
+
 -- Tracking events from Parcel
 CREATE TABLE IF NOT EXISTS tracking_events (
   id INTEGER PRIMARY KEY AUTOINCREMENT,

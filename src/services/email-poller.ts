@@ -1,9 +1,11 @@
 import { ImapClient, ImapConfig } from '../imap/client';
 import { parseEmail } from '../parser/email-parser';
 import { PackageRepository } from '../db/repositories/package-repository';
+import { ReviewRepository } from '../db/repositories/review-repository';
 import { StatsRepository } from '../db/repositories/stats-repository';
 import { ParcelClient } from '../parcel/client';
 import { getDb, initDb } from '../db/connection';
+import { createWebhookDispatcherFromEnv, WebhookDispatcher } from '../webhooks/dispatcher';
 
 export interface FolderConfig {
   name: string;
@@ -12,24 +14,29 @@ export interface FolderConfig {
 
 export interface PollerConfig {
   imap: ImapConfig;
-  parcelApiKey: string;
+  parcelApiKey?: string;
   pollIntervalMinutes?: number;
   folders?: FolderConfig[]; // Defaults to [{ name: 'INBOX' }]
+  webhookDispatcher?: WebhookDispatcher;
 }
 
 export class EmailPoller {
   private imapClient: ImapClient;
-  private parcelClient: ParcelClient;
+  private parcelClient: ParcelClient | null;
   private packageRepo: PackageRepository;
+  private reviewRepo: ReviewRepository;
   private statsRepo: StatsRepository;
+  private webhookDispatcher: WebhookDispatcher;
 
   constructor(private config: PollerConfig) {
     this.imapClient = new ImapClient(config.imap);
-    this.parcelClient = new ParcelClient(config.parcelApiKey);
+    this.parcelClient = config.parcelApiKey ? new ParcelClient(config.parcelApiKey) : null;
+    this.webhookDispatcher = config.webhookDispatcher || createWebhookDispatcherFromEnv();
     
     // Initialize database
     const db = initDb();
     this.packageRepo = new PackageRepository(db);
+    this.reviewRepo = new ReviewRepository(db);
     this.statsRepo = new StatsRepository(db);
   }
 
@@ -110,6 +117,40 @@ export class EmailPoller {
           continue;
         }
 
+        if (this.reviewRepo.pendingExists({
+          trackingNumber: trackingInfo.trackingNumber,
+          emailMessageId: trackingInfo.messageId,
+        })) {
+          console.log(`Review item already exists: ${trackingInfo.trackingNumber}`);
+          continue;
+        }
+
+        if (trackingInfo.confidence !== 'high') {
+          const reviewItem = this.reviewRepo.create({
+            trackingNumber: trackingInfo.trackingNumber,
+            carrier: trackingInfo.carrier,
+            retailer: trackingInfo.retailer || undefined,
+            productName: trackingInfo.productName,
+            orderNumber: trackingInfo.orderNumber || undefined,
+            emailMessageId: trackingInfo.messageId,
+            sourceFrom: email.from,
+            sourceSubject: email.subject,
+            confidence: trackingInfo.confidence,
+            reason: getReviewReason(trackingInfo.confidence),
+          });
+
+          console.log(`Queued review item: ${reviewItem.id} for tracking ${reviewItem.trackingNumber}`);
+          await this.webhookDispatcher.dispatch('review.created', {
+            reviewItem,
+            source: {
+              folder: folder.name,
+              from: email.from,
+              subject: email.subject,
+            },
+          });
+          continue;
+        }
+
         // Save to database
         const pkg = this.packageRepo.create({
           trackingNumber: trackingInfo.trackingNumber,
@@ -122,19 +163,38 @@ export class EmailPoller {
         });
 
         console.log(`Created package: ${pkg.id} for tracking ${pkg.trackingNumber}`);
+        await this.webhookDispatcher.dispatch('package.created', {
+          package: pkg,
+          source: {
+            folder: folder.name,
+            from: email.from,
+            subject: email.subject,
+          },
+        });
 
-        // Submit to Parcel API
-        try {
-          await this.parcelClient.createPackage({
-            trackingNumber: trackingInfo.trackingNumber,
-            carrier: trackingInfo.carrier,
-            name: trackingInfo.productName,
-          });
+        // Submit to Parcel API when sync is configured.
+        if (this.parcelClient) {
+          try {
+            await this.parcelClient.createPackage({
+              trackingNumber: trackingInfo.trackingNumber,
+              carrier: trackingInfo.carrier,
+              name: trackingInfo.productName,
+            });
 
-          console.log(`Submitted to Parcel: ${trackingInfo.trackingNumber}`);
-        } catch (parcelError) {
-          console.error(`Failed to submit to Parcel: ${parcelError}`);
-          // Continue - package is saved in DB and can be retried later
+            console.log(`Submitted to Parcel: ${trackingInfo.trackingNumber}`);
+            await this.webhookDispatcher.dispatch('parcel.synced', {
+              package: pkg,
+            });
+          } catch (parcelError) {
+            console.error(`Failed to submit to Parcel: ${parcelError}`);
+            await this.webhookDispatcher.dispatch('parcel.sync_failed', {
+              package: pkg,
+              error: String(parcelError),
+            });
+            // Continue - package is saved in DB and can be retried later
+          }
+        } else {
+          console.log(`Parcel sync disabled; saved ${trackingInfo.trackingNumber} locally`);
         }
 
         processedCount++;
@@ -170,4 +230,12 @@ export class EmailPoller {
       'INSERT INTO last_poll (folder, timestamp) VALUES (?, ?) ON CONFLICT(folder) DO UPDATE SET timestamp = excluded.timestamp'
     ).run(folder, new Date().toISOString());
   }
+}
+
+function getReviewReason(confidence: string): string {
+  if (confidence === 'low') {
+    return 'Low confidence detections are held for review because the tracking pattern is broad or easy to confuse with an order number.';
+  }
+
+  return 'Medium confidence detections are held for review before sync or automation.';
 }

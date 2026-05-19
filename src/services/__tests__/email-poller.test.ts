@@ -16,4 +16,11 @@ describe('EmailPoller', () => {
     });
     expect(poller).toBeDefined();
   });
+
+  test('constructor works without Parcel sync configured', () => {
+    const poller = new EmailPoller({
+      imap: mockImapConfig,
+    });
+    expect(poller).toBeDefined();
+  });
 });
