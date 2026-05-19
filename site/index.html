@@ -436,6 +436,19 @@
         font-weight: 760;
       }
 
+      .support-panel {
+        padding: 28px;
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        background: var(--panel);
+      }
+
+      .support-panel p {
+        margin: 0 0 18px;
+        color: var(--muted);
+        font-size: 16px;
+      }
+
       .faq-list {
         display: grid;
         gap: 14px;
@@ -591,6 +604,7 @@
           <a href="#how-it-works">How it works</a>
           <a href="#different">Why different</a>
           <a href="#integrations">Integrations</a>
+          <a href="#support">Support</a>
           <a href="#faq">FAQ</a>
         </nav>
         <a class="button primary" href="https://github.com/steveafrost/parcelrouter">View on GitHub</a>
@@ -756,6 +770,19 @@
             <div class="integration">Slack</div>
             <div class="integration">Discord</div>
             <div class="integration">Calendar</div>
+          </div>
+        </div>
+      </section>
+
+      <section id="support">
+        <div class="wrap section-grid">
+          <div>
+            <h2>Support the project</h2>
+            <p class="section-copy">ParcelRouter is free and local-first. Small contributions help cover domains, infrastructure, and integration testing.</p>
+          </div>
+          <div class="support-panel">
+            <p>Use Stripe's hosted payment page to make a one-time contribution. Stripe handles payment details; ParcelRouter never sees card data.</p>
+            <a class="button primary" href="https://buy.stripe.com/3cI8wI2th7zy68UdpAeIw01" target="_blank" rel="noopener noreferrer">Buy us a coffee</a>
           </div>
         </div>
       </section>

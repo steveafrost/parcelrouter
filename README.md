@@ -187,6 +187,10 @@ The short version:
 
 > Your private package event router. Automatically find packages from your email, review uncertain matches, and sync delivery events to the tools you already use.
 
+## Support
+
+ParcelRouter has an optional Stripe-hosted "Buy us a coffee" link on the marketing site. See [docs/stripe-support-link.md](./docs/stripe-support-link.md) for the live link and Stripe object IDs.
+
 ## Architecture
 
 ```text

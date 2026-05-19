@@ -23,6 +23,7 @@ The project is not positioned as another shopping app or generic carrier tracker
 - Optionally syncs detected packages to the Parcel app through the Parcel API.
 - Optionally posts webhook events for package creation, package deletion, review creation, review approval, review ignore, Parcel sync success, and Parcel sync failure.
 - Provides a guided one-line installer: curl -fsSL https://raw.githubusercontent.com/steveafrost/parcelrouter/main/install.sh | bash
+- Provides an optional Stripe-hosted "Buy us a coffee" support link.
 
 ## Intended Users
 
@@ -45,4 +46,5 @@ Primary repository: https://github.com/steveafrost/parcelrouter
 - Marketing page: /index.html
 - Setup guide: ../SETUP.md
 - Product strategy: ../docs/product-strategy.md
+- Stripe support link: ../docs/stripe-support-link.md
 - README: ../README.md
