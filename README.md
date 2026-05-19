@@ -37,6 +37,20 @@ cd parcel-tracker
 
 ### 2. Create A Local Environment File
 
+Fast path:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/steveafrost/parcel-tracker/main/install.sh | bash
+```
+
+If you already cloned the repo:
+
+```bash
+./install.sh
+```
+
+Or configure it manually:
+
 ```bash
 cp .env.example .env
 ```

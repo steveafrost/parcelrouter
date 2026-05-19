@@ -162,6 +162,18 @@
         margin-top: 34px;
       }
 
+      .install-snippet {
+        width: min(100%, 640px);
+        margin-top: 18px;
+        padding: 14px 16px;
+        overflow-x: auto;
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        background: #14201b;
+        color: #f4f8f5;
+        font: 13px/1.5 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+      }
+
       .proof-list {
         display: grid;
         gap: 10px;
@@ -590,9 +602,10 @@
             <h1>Own your delivery data.</h1>
             <p class="hero-copy">Parcel Tracker scans your inbox locally, finds package tracking numbers, and routes delivery events to the tools you already use. No shopping feed. No ad funnel. No mystery parser.</p>
             <div class="hero-actions">
-              <a class="button primary" href="https://github.com/steveafrost/parcel-tracker">Start with Docker</a>
+              <a class="button primary" href="https://github.com/steveafrost/parcel-tracker">Install locally</a>
               <a class="button secondary" href="#how-it-works">See how it works</a>
             </div>
+            <pre class="install-snippet"><code>curl -fsSL https://raw.githubusercontent.com/steveafrost/parcel-tracker/main/install.sh | bash</code></pre>
             <ul class="proof-list" aria-label="Product highlights">
               <li><span class="check">✓</span>Runs locally with Docker and SQLite</li>
               <li><span class="check">✓</span>Detects UPS, FedEx, USPS, Amazon, DHL, OnTrac, and LaserShip</li>
@@ -661,7 +674,7 @@
         <div class="wrap section-grid">
           <div>
             <h2>How people start using it</h2>
-            <p class="section-copy">Parcel Tracker is designed for a five-minute local install today, and a fuller connected app tomorrow.</p>
+            <p class="section-copy">Parcel Tracker is designed for a guided local install today, and a fuller connected app tomorrow.</p>
           </div>
           <div class="steps">
             <article class="step">
@@ -776,7 +789,7 @@
         <div class="wrap cta-content">
           <div>
             <h2>Run your own package hub.</h2>
-            <p>Start with Docker, connect your mailbox, and turn shipping emails into clean package data you control.</p>
+            <p>Run the guided installer, connect your mailbox, and turn shipping emails into clean package data you control.</p>
           </div>
           <a class="button" href="https://github.com/steveafrost/parcel-tracker">View the repository</a>
         </div>
