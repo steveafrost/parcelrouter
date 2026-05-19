@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-# Add a Sitemap directive here after choosing the production domain.
+Sitemap: https://parcel-tracker-site.vercel.app/sitemap.xml
