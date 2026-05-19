@@ -48,7 +48,7 @@ open http://localhost:9001
 Or run the guided installer:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/steveafrost/parcelrouter/main/install.sh | bash
+curl -fsSL https://parcelrouter.com/install.sh | bash
 ```
 
 If you already cloned the repo:

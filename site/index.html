@@ -42,6 +42,7 @@
         color: var(--ink);
         font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
         line-height: 1.5;
+        overflow-x: hidden;
       }
 
       a {
@@ -68,6 +69,7 @@
         align-items: center;
         justify-content: space-between;
         gap: 28px;
+        min-width: 0;
       }
 
       .brand {
@@ -77,6 +79,7 @@
         font-weight: 760;
         text-decoration: none;
         letter-spacing: 0;
+        min-width: 0;
       }
 
       .brand-mark {
@@ -115,6 +118,7 @@
         font-weight: 720;
         text-decoration: none;
         white-space: nowrap;
+        max-width: 100%;
       }
 
       .button.primary {
@@ -143,7 +147,7 @@
       h1 {
         margin: 0;
         max-width: 720px;
-        font-size: 68px;
+        font-size: 60px;
         line-height: 0.98;
         letter-spacing: 0;
         font-weight: 820;
@@ -168,7 +172,8 @@
         width: min(100%, 640px);
         margin-top: 18px;
         padding: 14px 16px;
-        overflow-x: auto;
+        overflow-wrap: anywhere;
+        white-space: pre-wrap;
         border: 1px solid var(--line);
         border-radius: var(--radius);
         background: #14201b;
@@ -190,6 +195,7 @@
         display: flex;
         align-items: center;
         gap: 10px;
+        min-width: 0;
       }
 
       .check {
@@ -211,6 +217,7 @@
         background: #fff;
         box-shadow: var(--shadow);
         overflow: hidden;
+        min-width: 0;
       }
 
       .app-topbar {
@@ -239,6 +246,10 @@
         color: var(--muted);
         font-size: 13px;
         font-weight: 720;
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
       }
 
       .mock-app {
@@ -269,6 +280,7 @@
 
       .main-panel {
         padding: 20px;
+        min-width: 0;
       }
 
       .panel-head {
@@ -307,18 +319,21 @@
         border: 1px solid var(--line);
         border-radius: 9px;
         background: #fff;
+        min-width: 0;
       }
 
       .package-row strong {
         display: block;
         font-size: 15px;
         margin-bottom: 4px;
+        overflow-wrap: anywhere;
       }
 
       .package-row span {
         display: block;
         color: var(--muted);
         font-size: 12px;
+        overflow-wrap: anywhere;
       }
 
       .confidence {
@@ -434,6 +449,8 @@
         background: var(--panel);
         color: var(--ink);
         font-weight: 760;
+        min-width: 0;
+        overflow-wrap: anywhere;
       }
 
       .support-panel {
@@ -473,6 +490,7 @@
         justify-content: space-between;
         gap: 32px;
         align-items: center;
+        min-width: 0;
       }
 
       .cta-content h2 {
@@ -512,6 +530,10 @@
           display: none;
         }
 
+        .nav {
+          gap: 14px;
+        }
+
         .hero {
           padding-top: 58px;
         }
@@ -519,6 +541,7 @@
         .hero-grid,
         .section-grid {
           grid-template-columns: 1fr;
+          gap: 34px;
         }
 
         h1 {
@@ -550,16 +573,115 @@
           width: min(100% - 28px, 1120px);
         }
 
+        .nav {
+          min-height: 64px;
+        }
+
+        .brand {
+          gap: 9px;
+          font-size: 15px;
+        }
+
+        .brand-mark {
+          width: 30px;
+          height: 30px;
+          border-radius: 6px;
+        }
+
+        .site-header .button {
+          min-height: 38px;
+          padding: 0 12px;
+          font-size: 13px;
+        }
+
+        .hero {
+          padding: 48px 0 54px;
+        }
+
         h1 {
-          font-size: 42px;
+          font-size: 36px;
+          line-height: 1.04;
         }
 
         h2 {
-          font-size: 32px;
+          font-size: 30px;
         }
 
         .hero-copy {
-          font-size: 18px;
+          font-size: 17px;
+        }
+
+        .hero-actions {
+          display: grid;
+          grid-template-columns: 1fr;
+        }
+
+        .hero-actions .button,
+        .support-panel .button,
+        .cta-content .button {
+          width: 100%;
+        }
+
+        .install-snippet {
+          padding: 12px;
+          font-size: 12px;
+        }
+
+        .proof-list li {
+          align-items: flex-start;
+        }
+
+        .app-topbar {
+          height: auto;
+          min-height: 48px;
+          gap: 12px;
+          padding: 12px;
+        }
+
+        .main-panel {
+          padding: 14px;
+        }
+
+        .panel-head {
+          display: grid;
+          gap: 10px;
+        }
+
+        .panel-head h2 {
+          font-size: 20px;
+        }
+
+        .status-pill,
+        .confidence {
+          justify-self: start;
+          min-width: 0;
+          white-space: nowrap;
+        }
+
+        .package-row {
+          gap: 10px;
+          padding: 12px;
+        }
+
+        section {
+          padding: 56px 0;
+        }
+
+        .step {
+          grid-template-columns: 34px 1fr;
+          gap: 12px;
+          padding: 16px;
+        }
+
+        .step-number {
+          width: 34px;
+          height: 34px;
+        }
+
+        .feature,
+        .faq,
+        .support-panel {
+          padding: 18px;
         }
 
         .feature-grid,
@@ -568,7 +690,8 @@
         }
 
         .product-frame {
-          margin-inline: -6px;
+          margin-inline: 0;
+          border-radius: 10px;
         }
 
         .package-row {
@@ -615,13 +738,13 @@
       <section class="hero">
         <div class="wrap hero-grid">
           <div>
-            <h1>Your private package event router.</h1>
+            <h1>Private package routing.</h1>
             <p class="hero-copy">ParcelRouter scans your inbox locally, finds package tracking numbers, and routes delivery events to the tools you already use. No shopping feed. No ad funnel. No mystery parser.</p>
             <div class="hero-actions">
               <a class="button primary" href="https://github.com/steveafrost/parcelrouter">Install locally</a>
               <a class="button secondary" href="#how-it-works">See how it works</a>
             </div>
-            <pre class="install-snippet"><code>curl -fsSL https://raw.githubusercontent.com/steveafrost/parcelrouter/main/install.sh | bash</code></pre>
+            <pre class="install-snippet"><code>curl -fsSL https://parcelrouter.com/install.sh | bash</code></pre>
             <ul class="proof-list" aria-label="Product highlights">
               <li><span class="check">✓</span>Runs locally with Docker and SQLite</li>
               <li><span class="check">✓</span>Detects UPS, FedEx, USPS, Amazon, DHL, OnTrac, and LaserShip</li>
@@ -689,7 +812,7 @@
       <section id="how-it-works">
         <div class="wrap section-grid">
           <div>
-            <h2>How people start using it</h2>
+            <h2>How it works</h2>
             <p class="section-copy">ParcelRouter is designed for a guided local install today, and a fuller connected app tomorrow.</p>
           </div>
           <div class="steps">
@@ -722,7 +845,7 @@
         <div class="wrap">
           <div class="section-grid">
             <div>
-              <h2>Not another shopping app</h2>
+              <h2>Not a shopping app</h2>
               <p class="section-copy">Most package apps want to become the place you shop or the cloud that receives your order emails. ParcelRouter is the layer you own.</p>
             </div>
             <div class="feature-grid">
@@ -758,7 +881,7 @@
       <section id="integrations">
         <div class="wrap section-grid">
           <div>
-            <h2>Designed to route delivery events anywhere</h2>
+            <h2>Route delivery events anywhere</h2>
             <p class="section-copy">Parcel sync is optional. The larger product is a package-event router for personal infrastructure.</p>
           </div>
           <div class="integrations" aria-label="Planned and current integrations">
@@ -790,7 +913,7 @@
       <section id="faq">
         <div class="wrap section-grid">
           <div>
-            <h2>Questions people ask first</h2>
+            <h2>Common questions</h2>
             <p class="section-copy">The current release is an early self-hosted app. The public product direction is broader: private package detection, review, routing, and history.</p>
           </div>
           <div class="faq-list">
