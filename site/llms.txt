@@ -22,7 +22,7 @@ The project is not positioned as another shopping app or generic carrier tracker
 - Provides review queue endpoints for listing, approving, and ignoring uncertain package detections.
 - Optionally syncs detected packages to the Parcel app through the Parcel API.
 - Optionally posts webhook events for package creation, package deletion, review creation, review approval, review ignore, Parcel sync success, and Parcel sync failure.
-- Provides a guided one-line installer: curl -fsSL https://raw.githubusercontent.com/steveafrost/parcel-tracker/main/install.sh | bash
+- Provides a guided one-line installer: curl -fsSL https://raw.githubusercontent.com/steveafrost/parcelrouter/main/install.sh | bash
 
 ## Intended Users
 
@@ -38,7 +38,7 @@ The core promise is: Your private package event router. Automatically find packa
 
 ## Repository
 
-Primary repository: https://github.com/steveafrost/parcel-tracker
+Primary repository: https://github.com/steveafrost/parcelrouter
 
 ## Important Pages
 

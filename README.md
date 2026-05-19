@@ -31,7 +31,7 @@ It reads shipping emails from your mailbox, extracts tracking numbers, stores pa
 ### 1. Clone The App
 
 ```bash
-git clone https://github.com/steveafrost/parcel-tracker.git parcelrouter
+git clone https://github.com/steveafrost/parcelrouter.git parcelrouter
 cd parcelrouter
 ```
 
@@ -40,7 +40,7 @@ cd parcelrouter
 Fast path:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/steveafrost/parcel-tracker/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/steveafrost/parcelrouter/main/install.sh | bash
 ```
 
 If you already cloned the repo:

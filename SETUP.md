@@ -25,7 +25,7 @@ For the impatient:
 
 ```bash
 # 1. Clone the repo
-git clone https://github.com/steveafrost/parcel-tracker.git parcelrouter
+git clone https://github.com/steveafrost/parcelrouter.git parcelrouter
 cd parcelrouter
 
 # 2. Copy environment template
@@ -48,7 +48,7 @@ open http://localhost:9001
 Or run the guided installer:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/steveafrost/parcel-tracker/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/steveafrost/parcelrouter/main/install.sh | bash
 ```
 
 If you already cloned the repo:
@@ -326,10 +326,10 @@ When `WEBHOOK_SECRET` is set, requests include `X-Parcel-Tracker-Signature` with
 - 📧 Check your Archive folder for old shipping emails
 - ⚠️ Review medium and low confidence detections in the dashboard
 - 🔔 If Parcel sync is configured, watch for Parcel API errors in the logs
-- 🐛 Report issues at: https://github.com/steveafrost/parcel-tracker/issues
+- 🐛 Report issues at: https://github.com/steveafrost/parcelrouter/issues
 
 ## Support
 
 - **Parcel API docs**: https://parcel.app/help/api-add-delivery.html
-- **GitHub Issues**: https://github.com/steveafrost/parcel-tracker/issues
+- **GitHub Issues**: https://github.com/steveafrost/parcelrouter/issues
 - **Apple ID help**: https://support.apple.com/en-us/HT204397

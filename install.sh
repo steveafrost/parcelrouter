@@ -3,7 +3,7 @@ set -euo pipefail
 
 APP_NAME="ParcelRouter"
 ENV_FILE=".env"
-REPO_URL="https://github.com/steveafrost/parcel-tracker.git"
+REPO_URL="https://github.com/steveafrost/parcelrouter.git"
 INSTALL_DIR="${PARCEL_ROUTER_DIR:-parcelrouter}"
 
 print_step() {
