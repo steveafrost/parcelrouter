@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://parcel-tracker-site.vercel.app/sitemap.xml
+Sitemap: https://parcelrouter.com/sitemap.xml

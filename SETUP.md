@@ -1,4 +1,4 @@
-# Parcel Tracker - Setup Guide
+# ParcelRouter - Setup Guide
 
 Complete setup instructions for self-hosted package tracking and package-event automation from iCloud Mail.
 
@@ -67,13 +67,13 @@ Since you have 2FA enabled on your Apple ID, you need an app-specific password:
 2. Sign in with your Apple ID
 3. Go to **Sign-In and Security** → **App-Specific Passwords**
 4. Click **Generate an app-specific password**
-5. Name it "Parcel Tracker" and copy the generated password (format: `xxxx-xxxx-xxxx-xxxx`)
+5. Name it "ParcelRouter" and copy the generated password (format: `xxxx-xxxx-xxxx-xxxx`)
 
 **Important**: This password is shown only once. Save it in your `.env` file immediately.
 
 ### Step 2: Decide Whether To Sync To Parcel
 
-Parcel Tracker works without Parcel. If you leave `PARCEL_API_KEY` blank, packages are stored locally and shown in the dashboard.
+ParcelRouter works without Parcel. If you leave `PARCEL_API_KEY` blank, packages are stored locally and shown in the dashboard.
 
 If you want detected packages to be added to the Parcel app automatically:
 
@@ -84,7 +84,7 @@ If you want detected packages to be added to the Parcel app automatically:
 
 ### Step 3: Decide Whether To Emit Webhooks
 
-Parcel Tracker can post package and review events to your own endpoint. Leave `WEBHOOK_URL` blank to disable this.
+ParcelRouter can post package and review events to your own endpoint. Leave `WEBHOOK_URL` blank to disable this.
 
 Use webhooks for:
 
@@ -307,7 +307,7 @@ If you want to build on top of this:
 
 ## Webhook Events
 
-If `WEBHOOK_URL` is configured, Parcel Tracker posts JSON envelopes for these events:
+If `WEBHOOK_URL` is configured, ParcelRouter posts JSON envelopes for these events:
 
 | Event | When it fires |
 |-------|---------------|

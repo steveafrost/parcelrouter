@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-APP_NAME="Parcel Tracker"
+APP_NAME="ParcelRouter"
 ENV_FILE=".env"
 REPO_URL="https://github.com/steveafrost/parcel-tracker.git"
 INSTALL_DIR="${PARCEL_TRACKER_DIR:-parcel-tracker}"

@@ -1,10 +1,10 @@
-# Parcel Tracker
+# ParcelRouter
 
-Parcel Tracker is a local-first package tracking and automation app for people who want control over their delivery data.
+ParcelRouter is a local-first package tracking and automation app for people who want control over their delivery data.
 
 ## Summary
 
-Parcel Tracker scans a user's email inbox locally, detects package tracking numbers, stores package metadata in a local database, and routes delivery events to tools such as Parcel, webhooks, Home Assistant, Apple Reminders, ntfy, Slack, Discord, and calendars.
+ParcelRouter scans a user's email inbox locally, detects package tracking numbers, stores package metadata in a local database, and routes delivery events to tools such as Parcel, webhooks, Home Assistant, Apple Reminders, ntfy, Slack, Discord, and calendars.
 
 The project is not positioned as another shopping app or generic carrier tracker. Its distinction is privacy, local ownership, auditable parsing, review queues for uncertain detections, and automation-friendly delivery events.
 
@@ -34,7 +34,7 @@ The project is not positioned as another shopping app or generic carrier tracker
 
 ## Product Position
 
-The core promise is: Own your delivery data. Automatically find packages from your email, review uncertain matches, and sync delivery events to the tools you already use.
+The core promise is: Your private package event router. Automatically find packages from your email, review uncertain matches, and sync delivery events to the tools you already use.
 
 ## Repository
 

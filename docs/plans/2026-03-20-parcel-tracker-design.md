@@ -1,4 +1,4 @@
-# Parcel Tracker Design Document
+# ParcelRouter Design Document
 
 ## Overview
 Self-hosted package tracking automation that reads iCloud Mail via IMAP, extracts tracking information, and auto-submits to Parcel API.

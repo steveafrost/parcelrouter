@@ -1,8 +1,8 @@
-# Parcel Tracker
+# ParcelRouter
 
-Parcel Tracker is a local-first package tracking and automation app for your inbox.
+ParcelRouter is a local-first package tracking and delivery event router for your inbox.
 
-It reads shipping emails from your mailbox, extracts tracking numbers, stores package metadata locally, and can sync deliveries to Parcel or your own automations. The goal is not to be another shopping app. The goal is to give you a private package operations hub you control.
+It reads shipping emails from your mailbox, extracts tracking numbers, stores package metadata locally, and can sync deliveries to Parcel or your own automations. The goal is not to be another shopping app. The goal is to give you a private package event router you control.
 
 ## Who It Is For
 
@@ -177,13 +177,7 @@ SKIP_IMAP_TESTS=true SKIP_PARCEL_TESTS=true npm test -- --runInBand
 
 ## Marketing Site
 
-The crawlable static marketing page lives in [site/index.html](./site/index.html). It is intentionally plain static HTML/CSS so it can be hosted anywhere and indexed easily.
-
-When a public domain is chosen, add:
-
-- A canonical URL in `site/index.html`.
-- A production `site/sitemap.xml`.
-- The deployed site URL to `site/robots.txt`.
+The crawlable static marketing page lives in [site/index.html](./site/index.html) and is published at [parcelrouter.com](https://parcelrouter.com). It is intentionally plain static HTML/CSS so it can be hosted anywhere and indexed easily.
 
 ## Product Direction
 
@@ -191,7 +185,7 @@ See [docs/product-strategy.md](./docs/product-strategy.md) for the product posit
 
 The short version:
 
-> Own your delivery data. Automatically find packages from your email, review uncertain matches, and sync delivery events to the tools you already use.
+> Your private package event router. Automatically find packages from your email, review uncertain matches, and sync delivery events to the tools you already use.
 
 ## Architecture
 

@@ -2,13 +2,13 @@
 
 ## Working Position
 
-Parcel Tracker is a privacy-first package automation hub for people who want control over their delivery data, not another shopping app.
+ParcelRouter is a privacy-first package automation hub for people who want control over their delivery data, not another shopping app.
 
 The product should not compete head-on with Parcel, Shop, AfterShip, or 17TRACK as a generic package tracker. Those products already have mature mobile apps, carrier networks, and notification systems. The stronger wedge is to become the user-owned layer that reads delivery signals from email, cleans them up, stores them locally, and routes them anywhere.
 
 ## Core Promise
 
-Own your delivery data. Automatically find packages from your email, review uncertain matches, and sync delivery events to the tools you already use.
+Your private package event router. Automatically find packages from your email, review uncertain matches, and sync delivery events to the tools you already use.
 
 ## Target Users
 
@@ -20,7 +20,7 @@ Own your delivery data. Automatically find packages from your email, review unce
 
 ## Competitive Map
 
-| Product | Strength | Opening For Parcel Tracker |
+| Product | Strength | Opening For ParcelRouter |
 | --- | --- | --- |
 | Parcel | Excellent Apple-native package app, push notifications, widgets, Web Access, Amazon integration, broad carrier support. | App/service destination, not a local automation layer. API access and limits are controlled by Parcel. |
 | Shop | Strong Gmail/Outlook and Shop Pay order import, convenient consumer app. | Commerce-platform shaped, cloud-account based, limited as a user-owned automation tool. |
@@ -75,16 +75,8 @@ The full app should feel like package operations software:
 6. Improve the dashboard into a real app shell.
 7. Document privacy boundaries clearly.
 
-## Naming Notes
+## Naming
 
-The current name, Parcel Tracker, is descriptive but crowded and overlaps with existing apps. Before public launch, consider a name that emphasizes ownership and automation rather than generic tracking.
+The public product name is ParcelRouter.
 
-Possible directions:
-
-- PackageOps
-- DispatchBoard
-- ParcelHub
-- DeliveryDesk
-- TrackFoundry
-- InboxParcel
-
+It is intentionally direct: the product is not only a package tracker, it is a private router for package events. The `.com` domain supports a broader audience while the self-hosted install, webhooks, local database, and API keep the developer and automation positioning intact.

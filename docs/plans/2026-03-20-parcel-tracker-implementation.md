@@ -1,4 +1,4 @@
-# Parcel Tracker Implementation Plan
+# ParcelRouter Implementation Plan
 
 > **REQUIRED SUB-SKILL:** Use the executing-plans skill to implement this plan task-by-task.
 
@@ -27,7 +27,7 @@
 {
   "name": "parcel-tracker",
   "version": "1.0.0",
-  "description": "Self-hosted package tracking from iCloud Mail",
+  "description": "Local-first package tracking and delivery event routing from your inbox",
   "main": "dist/index.js",
   "scripts": {
     "build": "tsc",
