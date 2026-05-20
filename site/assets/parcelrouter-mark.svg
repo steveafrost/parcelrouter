@@ -1,10 +1,13 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-labelledby="title desc">
   <title id="title">ParcelRouter mark</title>
-  <desc id="desc">A package with a route line and destination pin.</desc>
+  <desc id="desc">A package box with a routed tape strip.</desc>
   <rect width="128" height="128" rx="28" fill="#0f6b47"/>
-  <path d="M34 35.5h41.5c13 0 23.5 10.5 23.5 23.5S88.5 82.5 75.5 82.5H50" fill="none" stroke="#d9f2e5" stroke-width="10" stroke-linecap="round"/>
-  <path d="M53 82.5 39.5 69 26 82.5 39.5 96z" fill="#ffffff"/>
-  <path d="M36 45h32l12 11v30H36z" fill="#ffffff"/>
-  <path d="M68 45v12h12" fill="none" stroke="#0f6b47" stroke-width="6" stroke-linejoin="round"/>
-  <path d="M47 63h22M47 75h16" fill="none" stroke="#0f6b47" stroke-width="6" stroke-linecap="round"/>
+  <path d="M25 43.5 64 29l39 14.5-39 14.7z" fill="#f7fbf8"/>
+  <path d="m47 35.3 39 14.6-13.6 5.1-39-14.5z" fill="#d9f2e5"/>
+  <path d="M25 43.5 64 58.2v44.2L25 88.3z" fill="#f7fbf8"/>
+  <path d="m64 58.2 39-14.7v44.8l-39 14.1z" fill="#e4f3ea"/>
+  <path d="m72.4 55 13.6-5.1v26.6l-6.8-5.4-6.8 10z" fill="#b97818"/>
+  <path d="M25 43.5 64 58.2l39-14.7M64 58.2v44.2" fill="none" stroke="#0f6b47" stroke-width="5" stroke-linejoin="round"/>
+  <path d="M38 67.5h14v18.2H38z" fill="#d6e8dd" stroke="#0f6b47" stroke-width="5" stroke-linejoin="round"/>
+  <path d="M60 71.5h17M60 82h22M60 92.5h15" fill="none" stroke="#0f6b47" stroke-width="6" stroke-linecap="round"/>
 </svg>
