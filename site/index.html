@@ -322,18 +322,26 @@
         min-width: 0;
       }
 
+      .package-row > div:first-child {
+        min-width: 0;
+      }
+
       .package-row strong {
         display: block;
         font-size: 15px;
         margin-bottom: 4px;
-        overflow-wrap: anywhere;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
       }
 
       .package-row span {
         display: block;
         color: var(--muted);
         font-size: 12px;
-        overflow-wrap: anywhere;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
       }
 
       .confidence {
@@ -776,29 +784,29 @@
                 <div class="package-list">
                   <div class="package-row">
                     <div>
-                      <strong>Target: Your order has shipped</strong>
-                      <span>FedEx · 518120992083 · source: oe.target.com</span>
+                      <strong>Target shipment</strong>
+                      <span>FedEx · source: Target</span>
                     </div>
                     <div class="confidence high">High</div>
                   </div>
                   <div class="package-row">
                     <div>
-                      <strong>Methodical Coffee: Your order has been received</strong>
-                      <span>USPS · 9434650899562176786441 · saved locally</span>
+                      <strong>Coffee subscription</strong>
+                      <span>USPS · saved locally</span>
                     </div>
                     <div class="confidence high">High</div>
                   </div>
                   <div class="package-row">
                     <div>
-                      <strong>Unknown sender: possible DHL delivery</strong>
-                      <span>Low confidence · held before sync · review tracking context</span>
+                      <strong>Possible DHL match</strong>
+                      <span>Review before routing</span>
                     </div>
                     <div class="confidence review">Review</div>
                   </div>
                   <div class="package-row">
                     <div>
-                      <strong>Webhook event prepared</strong>
-                      <span>delivery.detected · Home Assistant and reminders ready</span>
+                      <strong>Webhook ready</strong>
+                      <span>Home Assistant · Reminders</span>
                     </div>
                     <div class="confidence high">Ready</div>
                   </div>
