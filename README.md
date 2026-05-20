@@ -177,7 +177,7 @@ Integration tests are skipped by default unless credentials are present.
 SKIP_IMAP_TESTS=true SKIP_PARCEL_TESTS=true npm test -- --runInBand
 ```
 
-The E2E suite runs the static marketing site through Playwright and verifies the header navigation, generated logo asset, favicon/manifest endpoints, and mobile overflow behavior.
+The E2E suite runs the static marketing site and the ParcelRouter dashboard through Playwright. It verifies marketing navigation/assets/mobile overflow plus dashboard approve, ignore, delete, and API persistence flows against an isolated test database.
 
 ## Marketing Site
 
