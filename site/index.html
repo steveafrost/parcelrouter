@@ -15,6 +15,10 @@
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="ParcelRouter - Your private package event router">
     <meta name="twitter:description" content="A local-first package tracking and automation app for your inbox.">
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+    <link rel="manifest" href="/site.webmanifest">
+    <meta name="theme-color" content="#0f6b47">
     <style>
       :root {
         --bg: #ffffff;
@@ -86,11 +90,8 @@
         width: 34px;
         height: 34px;
         border-radius: 7px;
-        display: grid;
-        place-items: center;
-        background: var(--green);
-        color: #fff;
-        font-weight: 800;
+        display: block;
+        flex: none;
       }
 
       .nav-links {
@@ -730,7 +731,7 @@
     <header class="site-header">
       <div class="wrap nav">
         <a class="brand" href="#top" aria-label="ParcelRouter home">
-          <span class="brand-mark">P</span>
+          <img class="brand-mark" src="/assets/parcelrouter-mark.svg" alt="" width="34" height="34">
           <span>ParcelRouter</span>
         </a>
         <nav class="nav-links" aria-label="Primary navigation">

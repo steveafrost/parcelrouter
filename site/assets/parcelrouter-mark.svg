@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-labelledby="title desc">
+  <title id="title">ParcelRouter mark</title>
+  <desc id="desc">A package with a route line and destination pin.</desc>
+  <rect width="128" height="128" rx="28" fill="#0f6b47"/>
+  <path d="M34 35.5h41.5c13 0 23.5 10.5 23.5 23.5S88.5 82.5 75.5 82.5H50" fill="none" stroke="#d9f2e5" stroke-width="10" stroke-linecap="round"/>
+  <path d="M53 82.5 39.5 69 26 82.5 39.5 96z" fill="#ffffff"/>
+  <path d="M36 45h32l12 11v30H36z" fill="#ffffff"/>
+  <path d="M68 45v12h12" fill="none" stroke="#0f6b47" stroke-width="6" stroke-linejoin="round"/>
+  <path d="M47 63h22M47 75h16" fill="none" stroke="#0f6b47" stroke-width="6" stroke-linecap="round"/>
+</svg>

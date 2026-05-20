@@ -1,0 +1,17 @@
+{
+  "name": "ParcelRouter",
+  "short_name": "ParcelRouter",
+  "description": "Local-first package tracking and automation from your inbox.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#0f6b47",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
