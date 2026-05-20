@@ -165,6 +165,8 @@ When `WEBHOOK_SECRET` is set, requests include `X-Parcel-Tracker-Signature` with
 npm ci
 npm run setup:check
 npm test
+npm run test:e2e:install
+npm run test:e2e
 npm run build
 npm run dev
 ```
@@ -174,6 +176,8 @@ Integration tests are skipped by default unless credentials are present.
 ```bash
 SKIP_IMAP_TESTS=true SKIP_PARCEL_TESTS=true npm test -- --runInBand
 ```
+
+The E2E suite runs the static marketing site through Playwright and verifies the header navigation, generated logo asset, favicon/manifest endpoints, and mobile overflow behavior.
 
 ## Marketing Site
 
