@@ -284,8 +284,8 @@
       }
 
       .panel-head {
-        display: flex;
-        justify-content: space-between;
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
         gap: 16px;
         align-items: flex-start;
         margin-bottom: 18px;
@@ -304,6 +304,8 @@
         color: #7a4b0f;
         font-size: 12px;
         font-weight: 780;
+        min-width: max-content;
+        white-space: nowrap;
       }
 
       .package-list {
@@ -779,7 +781,7 @@
                     <h2>Recent deliveries</h2>
                     <p class="section-copy">Inbox scan completed two minutes ago.</p>
                   </div>
-                  <span class="status-pill">2 need review</span>
+                  <span class="status-pill">2 to review</span>
                 </div>
                 <div class="package-list">
                   <div class="package-row">
