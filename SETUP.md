@@ -45,6 +45,8 @@ docker-compose up -d
 open http://localhost:9001
 ```
 
+The dashboard/API requires `PARCEL_TRACKER_AUTH_TOKEN` for every route except `/health`; send it as `Authorization: Bearer <token>` or place the app behind an authenticated local proxy.
+
 Or run the guided installer:
 
 ```bash

@@ -62,11 +62,14 @@ IMAP_HOST=imap.mail.me.com
 IMAP_PORT=993
 IMAP_USER=your.email@icloud.com
 IMAP_PASS=your-apple-app-specific-password
+PARCEL_TRACKER_AUTH_TOKEN=replace-with-a-long-random-token
 PARCEL_API_KEY=
 WEBHOOK_URL=
 WEBHOOK_SECRET=
 POLL_INTERVAL=3600
 ```
+
+Dashboard and API requests, except `/health`, must include `Authorization: Bearer <PARCEL_TRACKER_AUTH_TOKEN>`. Keep the service bound to localhost or behind an authenticated proxy if you do not want to enter a bearer token in front of it.
 
 You need:
 

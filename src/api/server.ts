@@ -12,6 +12,7 @@ export function createServer(): express.Express {
   const webhookDispatcher = createWebhookDispatcherFromEnv();
   
   app.use(express.json());
+  app.use(requireDashboardAuth);
   
   // Determine public path - try multiple locations
   const possiblePublicPaths = [
@@ -244,6 +245,27 @@ export function createServer(): express.Express {
   });
 
   return app;
+}
+
+function requireDashboardAuth(req: express.Request, res: express.Response, next: express.NextFunction): void {
+  if (req.path === '/health') {
+    next();
+    return;
+  }
+
+  const expected = process.env.PARCEL_TRACKER_AUTH_TOKEN;
+  if (!expected) {
+    res.status(503).json({ error: 'PARCEL_TRACKER_AUTH_TOKEN is required before exposing the dashboard API.' });
+    return;
+  }
+
+  const authorization = req.header('authorization') || '';
+  if (authorization !== `Bearer ${expected}`) {
+    res.status(401).json({ error: 'Unauthorized' });
+    return;
+  }
+
+  next();
 }
 
 export function startServer(port: number = 3000): void {

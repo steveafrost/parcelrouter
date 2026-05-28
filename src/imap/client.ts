@@ -18,9 +18,6 @@ export class ImapClient {
       host: this.config.host,
       port: this.config.port,
       secure: true,
-      tls: {
-        rejectUnauthorized: false, // Allow self-signed certs for iCloud
-      },
       auth: {
         user: this.config.user,
         pass: this.config.password,
