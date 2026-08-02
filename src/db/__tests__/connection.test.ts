@@ -20,6 +20,8 @@ describe('Database Connection', () => {
     expect(tableNames).toContain('review_items');
     expect(tableNames).toContain('tracking_events');
     expect(tableNames).toContain('last_poll');
+    expect(tableNames).toContain('imap_cursors');
+    expect(tableNames).toContain('parcel_sync_jobs');
   });
 
   test('getDb returns same instance', () => {

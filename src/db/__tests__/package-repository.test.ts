@@ -1,11 +1,14 @@
+import type { Database } from 'better-sqlite3';
 import { initDb, closeDb } from '../connection';
 import { PackageRepository } from '../repositories/package-repository';
+import { ParcelSyncRepository } from '../repositories/parcel-sync-repository';
 
 describe('PackageRepository', () => {
   let repo: PackageRepository;
+  let db: Database;
 
   beforeEach(() => {
-    const db = initDb(':memory:');
+    db = initDb(':memory:');
     repo = new PackageRepository(db);
   });
 
@@ -57,5 +60,20 @@ describe('PackageRepository', () => {
 
     expect(repo.exists('1Z999AA10123456784')).toBe(true);
     expect(repo.exists('NONEXISTENT')).toBe(false);
+  });
+
+  test('delete removes dependent tracking events and Parcel retry jobs', () => {
+    const pkg = repo.create({
+      trackingNumber: '1Z999AA10123456784',
+      carrier: 'UPS',
+    });
+    db.prepare(
+      'INSERT INTO tracking_events (package_id, status) VALUES (?, ?)'
+    ).run(pkg.id, 'in_transit');
+    new ParcelSyncRepository(db).recordFailure(pkg.id, 'Parcel unavailable');
+
+    expect(repo.delete(pkg.id)).toBe(true);
+    expect(db.prepare('SELECT COUNT(*) AS count FROM tracking_events').get()).toEqual({ count: 0 });
+    expect(db.prepare('SELECT COUNT(*) AS count FROM parcel_sync_jobs').get()).toEqual({ count: 0 });
   });
 });

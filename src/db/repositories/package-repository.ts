@@ -87,8 +87,12 @@ export class PackageRepository {
   }
 
   delete(id: string): boolean {
-    const result = this.db.prepare('DELETE FROM tracked_packages WHERE id = ?').run(id);
-    return result.changes > 0;
+    return this.db.transaction(() => {
+      this.db.prepare('DELETE FROM parcel_sync_jobs WHERE package_id = ?').run(id);
+      this.db.prepare('DELETE FROM tracking_events WHERE package_id = ?').run(id);
+      const result = this.db.prepare('DELETE FROM tracked_packages WHERE id = ?').run(id);
+      return result.changes > 0;
+    })();
   }
 
   private mapRow(row: any): Package {

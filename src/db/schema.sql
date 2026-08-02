@@ -51,10 +51,33 @@ CREATE TABLE IF NOT EXISTS tracking_events (
 
 CREATE INDEX IF NOT EXISTS idx_package_id ON tracking_events(package_id);
 
+-- Durable retry queue for Parcel API synchronization failures
+CREATE TABLE IF NOT EXISTS parcel_sync_jobs (
+  id TEXT PRIMARY KEY,
+  package_id TEXT UNIQUE NOT NULL,
+  attempts INTEGER NOT NULL DEFAULT 0,
+  status TEXT NOT NULL DEFAULT 'pending',
+  next_attempt_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  last_error TEXT,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (package_id) REFERENCES tracked_packages(id) ON DELETE CASCADE
+);
+
+CREATE INDEX IF NOT EXISTS idx_parcel_sync_due ON parcel_sync_jobs(status, next_attempt_at);
+
 -- Last poll timestamp per folder
 CREATE TABLE IF NOT EXISTS last_poll (
   folder TEXT PRIMARY KEY,
   timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Durable IMAP cursor per folder. UIDVALIDITY protects against mailbox rebuilds.
+CREATE TABLE IF NOT EXISTS imap_cursors (
+  folder TEXT PRIMARY KEY,
+  uid_validity TEXT NOT NULL,
+  last_uid INTEGER NOT NULL,
+  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 
 -- Stats tracking

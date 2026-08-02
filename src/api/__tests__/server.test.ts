@@ -7,9 +7,11 @@ describe('API Server', () => {
   let app: ReturnType<typeof createServer>;
   const originalWebhookUrl = process.env.WEBHOOK_URL;
   const originalAuthToken = process.env.PARCEL_TRACKER_AUTH_TOKEN;
+  const originalParcelApiKey = process.env.PARCEL_API_KEY;
 
   beforeEach(() => {
     delete process.env.WEBHOOK_URL;
+    delete process.env.PARCEL_API_KEY;
     process.env.PARCEL_TRACKER_AUTH_TOKEN = 'test-token';
     initDb(':memory:');
     app = createServer();
@@ -26,6 +28,11 @@ describe('API Server', () => {
       process.env.PARCEL_TRACKER_AUTH_TOKEN = originalAuthToken;
     } else {
       delete process.env.PARCEL_TRACKER_AUTH_TOKEN;
+    }
+    if (originalParcelApiKey) {
+      process.env.PARCEL_API_KEY = originalParcelApiKey;
+    } else {
+      delete process.env.PARCEL_API_KEY;
     }
   });
 
@@ -45,6 +52,34 @@ describe('API Server', () => {
       .expect(200);
 
     expect(Array.isArray(response.body)).toBe(true);
+  });
+
+  test('browser login exchanges the access token for an HttpOnly session', async () => {
+    const agent = request.agent(app);
+
+    await agent
+      .get('/')
+      .set('Accept', 'text/html')
+      .expect(302)
+      .expect('Location', '/login');
+
+    const login = await agent
+      .post('/auth/login')
+      .send({ token: 'test-token' })
+      .expect(200);
+
+    expect(login.headers['set-cookie'][0]).toContain('parcelrouter_session=');
+    expect(login.headers['set-cookie'][0]).toContain('HttpOnly');
+    expect(login.headers['set-cookie'][0]).toContain('SameSite=Strict');
+
+    await agent.get('/packages').expect(200);
+  });
+
+  test('browser login rejects an invalid access token', async () => {
+    await request(app)
+      .post('/auth/login')
+      .send({ token: 'wrong-token' })
+      .expect(401);
   });
 
   test('dashboard API rejects missing or invalid bearer tokens', async () => {
@@ -108,6 +143,12 @@ describe('API Server', () => {
       .set('Authorization', 'Bearer test-token')
       .expect(200);
     expect(packages.body).toHaveLength(1);
+
+    const stats = await request(app)
+      .get('/stats')
+      .set('Authorization', 'Bearer test-token')
+      .expect(200);
+    expect(stats.body.packagesCreated).toBe(1);
   });
 
   test('POST /review/:id/ignore removes item from pending queue', async () => {

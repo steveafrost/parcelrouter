@@ -1,18 +1,27 @@
 import express from 'express';
 import path from 'path';
 import fs from 'fs';
+import type { Server } from 'http';
 import { getDb, initDb } from '../db/connection';
 import { PackageRepository } from '../db/repositories/package-repository';
 import { ReviewRepository } from '../db/repositories/review-repository';
 import { StatsRepository } from '../db/repositories/stats-repository';
+import { ParcelSyncRepository } from '../db/repositories/parcel-sync-repository';
 import { createWebhookDispatcherFromEnv } from '../webhooks/dispatcher';
+import { ParcelSyncService } from '../services/parcel-sync-service';
+import {
+  clearSessionCookie,
+  createSessionToken,
+  credentialsAreValid,
+  loginTokenIsValid,
+  setSessionCookie,
+} from './auth';
 
 export function createServer(): express.Express {
   const app = express();
   const webhookDispatcher = createWebhookDispatcherFromEnv();
   
   app.use(express.json());
-  app.use(requireDashboardAuth);
   
   // Determine public path - try multiple locations
   const possiblePublicPaths = [
@@ -41,9 +50,44 @@ export function createServer(): express.Express {
       status: 'ok',
       timestamp: new Date().toISOString(),
       parcelSyncEnabled: Boolean(process.env.PARCEL_API_KEY),
+      pendingParcelSyncs: new ParcelSyncRepository(getDb()).countPending(),
+      failedParcelSyncs: new ParcelSyncRepository(getDb()).countFailed(),
       webhookEnabled: webhookDispatcher.enabled,
     });
   });
+
+  app.get('/login', (req, res) => {
+    if (process.env.PARCEL_TRACKER_AUTH_TOKEN && credentialsAreValid(req, process.env.PARCEL_TRACKER_AUTH_TOKEN)) {
+      return res.redirect('/');
+    }
+    return res.sendFile(path.join(publicPath, 'login.html'));
+  });
+
+  app.post('/auth/login', (req, res) => {
+    const expected = process.env.PARCEL_TRACKER_AUTH_TOKEN;
+    if (!expected) {
+      return res.status(503).json({ error: 'PARCEL_TRACKER_AUTH_TOKEN is not configured.' });
+    }
+
+    if (!loginTokenIsValid(req.body?.token, expected)) {
+      return res.status(401).json({ error: 'Invalid access token' });
+    }
+
+    setSessionCookie(req, res, createSessionToken(expected));
+    return res.json({ success: true });
+  });
+
+  app.post('/auth/logout', (req, res) => {
+    clearSessionCookie(req, res);
+    return res.json({ success: true });
+  });
+
+  app.get('/auth/status', (req, res) => {
+    const expected = process.env.PARCEL_TRACKER_AUTH_TOKEN;
+    return res.json({ authenticated: Boolean(expected && credentialsAreValid(req, expected)) });
+  });
+
+  app.use(requireDashboardAuth);
   
   // Get stats
   app.get('/stats', (req, res) => {
@@ -107,17 +151,20 @@ export function createServer(): express.Express {
         });
       }
 
-      const pkg = packageRepo.create({
-        trackingNumber: item.trackingNumber,
-        carrier: item.carrier,
-        retailer: item.retailer,
-        productName: item.productName,
-        orderNumber: item.orderNumber,
-        emailMessageId: item.emailMessageId,
-        confidence: item.confidence,
-      });
-
-      reviewRepo.updateStatus(item.id, 'approved');
+      const pkg = db.transaction(() => {
+        const created = packageRepo.create({
+          trackingNumber: item.trackingNumber,
+          carrier: item.carrier,
+          retailer: item.retailer,
+          productName: item.productName,
+          orderNumber: item.orderNumber,
+          emailMessageId: item.emailMessageId,
+          confidence: item.confidence,
+        });
+        reviewRepo.updateStatus(item.id, 'approved');
+        new StatsRepository(db).incrementPackagesCreated();
+        return created;
+      })();
       await webhookDispatcher.dispatch('review.approved', {
         reviewItem: item,
         package: pkg,
@@ -129,7 +176,22 @@ export function createServer(): express.Express {
           reviewItemId: item.id,
         },
       });
-      res.json({ success: true, message: 'Review item approved', package: pkg });
+
+      const syncResult = await new ParcelSyncService(db, process.env.PARCEL_API_KEY).syncPackage(pkg);
+      if (syncResult.status === 'synced') {
+        await webhookDispatcher.dispatch('parcel.synced', { package: syncResult.package });
+      } else if (syncResult.status === 'queued') {
+        await webhookDispatcher.dispatch('parcel.sync_failed', {
+          package: pkg,
+          error: syncResult.error,
+          retryQueued: true,
+        });
+      }
+      res.json({
+        success: true,
+        message: 'Review item approved',
+        package: syncResult.status === 'synced' ? syncResult.package : pkg,
+      });
     } catch (error) {
       res.status(500).json({ error: 'Failed to approve review item' });
     }
@@ -249,19 +311,17 @@ export function createServer(): express.Express {
 }
 
 function requireDashboardAuth(req: express.Request, res: express.Response, next: express.NextFunction): void {
-  if (req.path === '/health') {
-    next();
-    return;
-  }
-
   const expected = process.env.PARCEL_TRACKER_AUTH_TOKEN;
   if (!expected) {
     res.status(503).json({ error: 'PARCEL_TRACKER_AUTH_TOKEN is required before exposing the dashboard API.' });
     return;
   }
 
-  const authorization = req.header('authorization') || '';
-  if (authorization !== `Bearer ${expected}`) {
+  if (!credentialsAreValid(req, expected)) {
+    if (req.method === 'GET' && req.path === '/') {
+      res.redirect('/login');
+      return;
+    }
     res.status(401).json({ error: 'Unauthorized' });
     return;
   }
@@ -269,13 +329,13 @@ function requireDashboardAuth(req: express.Request, res: express.Response, next:
   next();
 }
 
-export function startServer(port: number = 3000): void {
+export function startServer(port: number = 3000): Server {
   // Initialize database
   initDb();
   
   const app = createServer();
   
-  app.listen(port, () => {
+  return app.listen(port, () => {
     console.log(`Server running on port ${port}`);
   });
 }

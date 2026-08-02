@@ -3,7 +3,7 @@ const fs = require('fs');
 const path = require('path');
 
 const siteRoot = path.resolve(__dirname, '../../site');
-const port = Number(process.env.PORT || 4173);
+const port = Number(process.env.PLAYWRIGHT_SITE_PORT || 43173);
 
 const mimeTypes = {
   '.html': 'text/html; charset=utf-8',

@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex, nofollow">
+    <title>Sign in — ParcelRouter</title>
+    <style>
+        :root {
+            --cardboard: #c89b68;
+            --cardboard-dark: #8b5e34;
+            --paper: #fffdf7;
+            --ink: #2f2922;
+            --ink-light: #6f6256;
+            --tape: #e8d8b0;
+            --error: #991b1b;
+            --success: #166534;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            min-height: 100vh;
+            margin: 0;
+            display: grid;
+            place-items: center;
+            padding: 24px;
+            color: var(--ink);
+            background:
+                linear-gradient(rgba(255, 253, 247, 0.88), rgba(255, 253, 247, 0.88)),
+                repeating-linear-gradient(45deg, var(--tape) 0, var(--tape) 2px, transparent 2px, transparent 12px);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        }
+
+        main {
+            width: min(100%, 430px);
+            padding: 38px;
+            border: 2px solid var(--cardboard-dark);
+            border-radius: 18px;
+            background: var(--paper);
+            box-shadow: 10px 12px 0 rgba(139, 94, 52, 0.18);
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            margin-bottom: 28px;
+        }
+
+        .logo {
+            display: grid;
+            width: 52px;
+            height: 52px;
+            place-items: center;
+            border-radius: 13px;
+            background: var(--cardboard);
+            font-size: 28px;
+        }
+
+        h1 { margin: 0; font-size: 27px; }
+        .subtitle { margin: 3px 0 0; color: var(--ink-light); font-size: 14px; }
+        .intro { margin: 0 0 24px; color: var(--ink-light); line-height: 1.55; }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 14px;
+            font-weight: 700;
+        }
+
+        input {
+            width: 100%;
+            padding: 13px 14px;
+            border: 2px solid var(--tape);
+            border-radius: 10px;
+            color: var(--ink);
+            background: #fff;
+            font: inherit;
+        }
+
+        input:focus {
+            outline: 3px solid rgba(200, 155, 104, 0.28);
+            border-color: var(--cardboard-dark);
+        }
+
+        button {
+            width: 100%;
+            margin-top: 16px;
+            padding: 13px 18px;
+            border: 0;
+            border-radius: 10px;
+            color: #fff;
+            background: var(--cardboard-dark);
+            font: inherit;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        button:hover { filter: brightness(0.94); }
+        button:disabled { cursor: wait; opacity: 0.65; }
+
+        #message {
+            min-height: 22px;
+            margin: 14px 0 0;
+            color: var(--error);
+            font-size: 14px;
+            line-height: 1.45;
+        }
+
+        .help {
+            margin: 20px 0 0;
+            padding-top: 18px;
+            border-top: 1px solid var(--tape);
+            color: var(--ink-light);
+            font-size: 13px;
+            line-height: 1.5;
+        }
+
+        code { color: var(--cardboard-dark); }
+
+        @media (max-width: 520px) {
+            main { padding: 28px 22px; box-shadow: 6px 8px 0 rgba(139, 94, 52, 0.18); }
+        }
+    </style>
+</head>
+<body>
+    <main>
+        <div class="brand">
+            <div class="logo" aria-hidden="true">📦</div>
+            <div>
+                <h1>ParcelRouter</h1>
+                <p class="subtitle">Local package tracking</p>
+            </div>
+        </div>
+
+        <p class="intro">Enter the dashboard access token configured for this ParcelRouter installation.</p>
+
+        <form id="loginForm">
+            <label for="token">Access token</label>
+            <input id="token" name="token" type="password" autocomplete="current-password" required autofocus>
+            <button id="submitButton" type="submit">Sign in</button>
+            <p id="message" role="alert" aria-live="polite"></p>
+        </form>
+
+        <p class="help">Use the value of <code>PARCEL_TRACKER_AUTH_TOKEN</code> from your local <code>.env</code> file. The token is exchanged for an HttpOnly session cookie and is not stored in browser JavaScript.</p>
+    </main>
+
+    <script>
+        const form = document.getElementById('loginForm');
+        const tokenInput = document.getElementById('token');
+        const submitButton = document.getElementById('submitButton');
+        const message = document.getElementById('message');
+
+        form.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            message.textContent = '';
+            submitButton.disabled = true;
+            submitButton.textContent = 'Signing in…';
+
+            try {
+                const response = await fetch('/auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ token: tokenInput.value }),
+                });
+
+                if (!response.ok) {
+                    const result = await response.json().catch(() => ({}));
+                    throw new Error(result.error || 'Unable to sign in');
+                }
+
+                tokenInput.value = '';
+                window.location.assign('/');
+            } catch (error) {
+                message.textContent = error instanceof Error ? error.message : 'Unable to sign in';
+                tokenInput.focus();
+                tokenInput.select();
+            } finally {
+                submitButton.disabled = false;
+                submitButton.textContent = 'Sign in';
+            }
+        });
+    </script>
+</body>
+</html>

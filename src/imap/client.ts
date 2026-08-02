@@ -8,6 +8,16 @@ export interface ImapConfig {
   password: string;
 }
 
+export interface MailboxSnapshot {
+  uidValidity: string;
+  maxUid: number;
+}
+
+export interface UidRange {
+  start: number;
+  end: number;
+}
+
 export class ImapClient {
   private connection: ImapFlow | null = null;
 
@@ -29,11 +39,15 @@ export class ImapClient {
     await this.connection.connect();
   }
 
-  async openFolder(folderName: string = 'INBOX'): Promise<void> {
+  async openFolder(folderName: string = 'INBOX'): Promise<MailboxSnapshot> {
     if (!this.connection) {
       throw new Error('Not connected to IMAP server');
     }
-    await this.connection.mailboxOpen(folderName);
+    const mailbox = await this.connection.mailboxOpen(folderName);
+    return {
+      uidValidity: mailbox.uidValidity.toString(),
+      maxUid: Math.max(0, mailbox.uidNext - 1),
+    };
   }
 
   async disconnect(): Promise<void> {
@@ -43,25 +57,36 @@ export class ImapClient {
     }
   }
 
-  async fetchEmails(since: Date): Promise<ParsedEmail[]> {
+  async fetchEmails(since: Date, uidRange?: UidRange): Promise<ParsedEmail[]> {
     if (!this.connection) {
       throw new Error('Not connected to IMAP server');
     }
 
-    const messageIds = await this.connection.search({ since });
-    if (!messageIds || messageIds.length === 0) {
+    let messageIds: number[] | string;
+    if (uidRange) {
+      if (uidRange.start > uidRange.end) return [];
+      messageIds = `${uidRange.start}:${uidRange.end}`;
+    } else {
+      const searchResult = await this.connection.search({ since }, { uid: true });
+      if (!searchResult || searchResult.length === 0) return [];
+      messageIds = searchResult;
+    }
+
+    if (Array.isArray(messageIds) && messageIds.length === 0) {
       return [];
     }
 
     const emails: ParsedEmail[] = [];
 
     for await (const message of this.connection.fetch(messageIds, {
+      uid: true,
       envelope: true,
       source: true,
-    })) {
+    }, { uid: true })) {
       const fromAddress = message.envelope?.from?.[0];
 
       emails.push({
+        uid: message.uid,
         messageId: message.envelope?.messageId || '',
         from: fromAddress?.address || '',
         fromName: fromAddress?.name || undefined,

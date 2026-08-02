@@ -20,9 +20,11 @@ It reads shipping emails from your mailbox, extracts tracking numbers, stores pa
 - Scores detections with high, medium, or low confidence.
 - Sends medium and low confidence detections to a review queue before they become deliveries.
 - Stores packages and polling state in SQLite.
-- Shows a local dashboard.
+- Tracks each mailbox with a durable IMAP UID cursor so failed messages can be retried safely.
+- Shows a local dashboard protected by an HttpOnly login session.
 - Exposes a small REST API.
 - Optionally syncs detected packages to the Parcel app through the Parcel API.
+- Persists failed Parcel syncs and retries them with bounded backoff.
 - Optionally emits package and review events to a webhook endpoint.
 - Runs with Docker Compose.
 
@@ -63,13 +65,14 @@ IMAP_PORT=993
 IMAP_USER=your.email@icloud.com
 IMAP_PASS=your-apple-app-specific-password
 PARCEL_TRACKER_AUTH_TOKEN=replace-with-a-long-random-token
+PARCEL_TRACKER_SESSION_TTL_SECONDS=604800
 PARCEL_API_KEY=
 WEBHOOK_URL=
 WEBHOOK_SECRET=
 POLL_INTERVAL=3600
 ```
 
-Dashboard and API requests, except `/health`, must include `Authorization: Bearer <PARCEL_TRACKER_AUTH_TOKEN>`. Keep the service bound to localhost or behind an authenticated proxy if you do not want to enter a bearer token in front of it.
+Open the dashboard and enter `PARCEL_TRACKER_AUTH_TOKEN` on the sign-in screen. ParcelRouter exchanges it for an HttpOnly, same-site session cookie; API clients can continue to send `Authorization: Bearer <PARCEL_TRACKER_AUTH_TOKEN>`. The guided installer generates a strong token automatically.
 
 You need:
 

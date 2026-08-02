@@ -1,6 +1,7 @@
 import { extractTrackingNumberWithConfidence, detectCarrierFromSender, ConfidenceLevel } from './tracking-patterns';
 
 export interface ParsedEmail {
+  uid?: number;
   messageId: string;
   from: string;
   fromName?: string;

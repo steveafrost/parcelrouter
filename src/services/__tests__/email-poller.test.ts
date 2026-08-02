@@ -68,6 +68,7 @@ describe('EmailPoller', () => {
     consoleLogSpy = jest.spyOn(console, 'log').mockImplementation(() => undefined);
     consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => undefined);
     mockFetchEmails.mockResolvedValue([mockEmail]);
+    mockOpenFolder.mockResolvedValue({ uidValidity: '1', maxUid: 25 });
     mockCreatePackage.mockResolvedValue({ id: 'parcel-1' });
   });
 
@@ -209,9 +210,54 @@ describe('EmailPoller', () => {
       name: highConfidenceTracking.productName,
     });
     expect(new PackageRepository(getDb()).findAll()).toHaveLength(1);
+    expect(getDb().prepare('SELECT COUNT(*) AS count FROM parcel_sync_jobs').get()).toEqual({ count: 1 });
     expect(dispatch).toHaveBeenCalledWith('parcel.sync_failed', expect.objectContaining({
       package: expect.objectContaining({ trackingNumber: highConfidenceTracking.trackingNumber }),
       error: expect.stringContaining('Parcel unavailable'),
+      retryQueued: true,
     }));
+  });
+
+  test('retries a queued Parcel sync on a later poll', async () => {
+    (parseEmail as jest.Mock).mockReturnValue(highConfidenceTracking);
+    mockCreatePackage
+      .mockRejectedValueOnce(new Error('Parcel unavailable'))
+      .mockResolvedValueOnce({ id: 'parcel-delivery-1' });
+    const dispatch = jest.fn().mockResolvedValue(undefined);
+    const poller = new EmailPoller({
+      imap: mockImapConfig,
+      parcelApiKey: 'parcel-api-key',
+      webhookDispatcher: { enabled: true, dispatch } as any,
+    });
+
+    await poller.poll();
+    getDb().prepare("UPDATE parcel_sync_jobs SET next_attempt_at = '2000-01-01T00:00:00.000Z'").run();
+    await poller.poll();
+
+    expect(mockCreatePackage).toHaveBeenCalledTimes(2);
+    expect(getDb().prepare('SELECT COUNT(*) AS count FROM parcel_sync_jobs').get()).toEqual({ count: 0 });
+    expect(new PackageRepository(getDb()).findAll()[0].parcelPackageId).toBe('parcel-delivery-1');
+    expect(dispatch).toHaveBeenCalledWith('parcel.synced', expect.objectContaining({ retry: true }));
+  });
+
+  test('does not advance the IMAP cursor when an email fails processing', async () => {
+    (parseEmail as jest.Mock)
+      .mockImplementationOnce(() => { throw new Error('temporary parser failure'); })
+      .mockReturnValueOnce(highConfidenceTracking);
+
+    const poller = new EmailPoller({ imap: mockImapConfig });
+
+    await expect(poller.poll()).resolves.toBe(0);
+    const cursorAfterFailure = getDb().prepare(
+      'SELECT last_uid FROM imap_cursors WHERE folder = ?'
+    ).get('INBOX');
+    expect(cursorAfterFailure).toBeUndefined();
+
+    await expect(poller.poll()).resolves.toBe(1);
+    const cursorAfterRetry = getDb().prepare(
+      'SELECT last_uid FROM imap_cursors WHERE folder = ?'
+    ).get('INBOX') as { last_uid: number };
+    expect(cursorAfterRetry.last_uid).toBe(25);
+    expect(mockFetchEmails).toHaveBeenCalledTimes(2);
   });
 });

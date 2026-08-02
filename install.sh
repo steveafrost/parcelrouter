@@ -58,6 +58,10 @@ prompt_optional() {
   set_env "$var_name" "$value"
 }
 
+generate_auth_token() {
+  node -e "process.stdout.write(require('crypto').randomBytes(32).toString('hex'))"
+}
+
 escape_sed_replacement() {
   printf '%s' "$1" | sed -e 's/[\/&]/\\&/g'
 }
@@ -107,7 +111,7 @@ if [ -z "$COMPOSE" ]; then
 fi
 
 if ! has_command npm; then
-  printf 'npm is required for the setup check. Install Node.js 20 or newer, then run this script again.\n' >&2
+  printf 'npm is required for the setup check. Install Node.js 22, then run this script again.\n' >&2
   exit 1
 fi
 
@@ -128,6 +132,11 @@ fi
 
 if grep -Eq '^IMAP_PASS=(your-app-specific-password)?$' "$ENV_FILE" || ! grep -q '^IMAP_PASS=' "$ENV_FILE"; then
   prompt_secret "Apple app-specific password" "IMAP_PASS"
+fi
+
+if grep -Eq '^PARCEL_TRACKER_AUTH_TOKEN=(replace-with-a-long-random-token)?$' "$ENV_FILE" || ! grep -q '^PARCEL_TRACKER_AUTH_TOKEN=' "$ENV_FILE"; then
+  set_env "PARCEL_TRACKER_AUTH_TOKEN" "$(generate_auth_token)"
+  printf 'Generated a secure dashboard access token in %s.\n' "$ENV_FILE"
 fi
 
 printf '\nOptional integrations. Press Enter to skip.\n'

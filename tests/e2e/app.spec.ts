@@ -6,22 +6,16 @@ import { PackageRepository } from '../../src/db/repositories/package-repository'
 import { ReviewRepository } from '../../src/db/repositories/review-repository';
 import { StatsRepository } from '../../src/db/repositories/stats-repository';
 
-// Every route except /health requires this token (see requireDashboardAuth in
-// src/api/server.ts). The dashboard is normally fronted by an authenticating
-// proxy; in tests we replay that by injecting the header on every request.
-const AUTH_TOKEN = 'e2e-token';
-
-test.use({ extraHTTPHeaders: { authorization: `Bearer ${AUTH_TOKEN}` } });
-
 test.describe('ParcelRouter app dashboard', () => {
   let server: Server;
   let appUrl: string;
   let reviewItemId: string;
+  const originalAuthToken = process.env.PARCEL_TRACKER_AUTH_TOKEN;
 
   test.beforeEach(async () => {
     delete process.env.WEBHOOK_URL;
     delete process.env.PARCEL_API_KEY;
-    process.env.PARCEL_TRACKER_AUTH_TOKEN = AUTH_TOKEN;
+    process.env.PARCEL_TRACKER_AUTH_TOKEN = 'test-token';
     closeDb();
     initDb(':memory:');
 
@@ -67,13 +61,21 @@ test.describe('ParcelRouter app dashboard', () => {
       server.close((error) => error ? reject(error) : resolve());
     });
     closeDb();
-    delete process.env.PARCEL_TRACKER_AUTH_TOKEN;
+    if (originalAuthToken) {
+      process.env.PARCEL_TRACKER_AUTH_TOKEN = originalAuthToken;
+    } else {
+      delete process.env.PARCEL_TRACKER_AUTH_TOKEN;
+    }
   });
 
   test('approves a review item, shows it as a delivery, and deletes a delivery', async ({ page }) => {
     page.on('dialog', dialog => dialog.accept());
 
     await page.goto(appUrl);
+    await expect(page).toHaveURL(/\/login$/);
+    await page.getByLabel('Access token').fill('test-token');
+    await page.getByRole('button', { name: 'Sign in' }).click();
+    await expect(page).toHaveURL(`${appUrl}/`);
 
     await expect(page.getByText('Online')).toBeVisible();
     await expect(page.locator('#parcelSyncStatus')).toHaveText('Local');
@@ -111,6 +113,11 @@ test.describe('ParcelRouter app dashboard', () => {
   });
 
   test('ignores review items through the API and hides them from pending review', async ({ request }) => {
+    const loginResponse = await request.post(`${appUrl}/auth/login`, {
+      data: { token: 'test-token' },
+    });
+    expect(loginResponse.ok()).toBe(true);
+
     const ignoreResponse = await request.post(`${appUrl}/review/${reviewItemId}/ignore`);
     expect(ignoreResponse.ok()).toBe(true);
     await expect.poll(async () => {

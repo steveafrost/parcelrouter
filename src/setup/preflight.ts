@@ -37,9 +37,10 @@ function hasUsableValue(value: string | undefined): boolean {
 
   const normalized = value.trim().toLowerCase();
   return !(
-    normalized.includes('your.') ||
-    normalized.includes('your-') ||
-    normalized.includes('abcd-efgh') ||
+      normalized.includes('your.') ||
+      normalized.includes('your-') ||
+      normalized.includes('replace-with') ||
+      normalized.includes('abcd-efgh') ||
     normalized === 'changeme'
   );
 }
@@ -154,6 +155,20 @@ export function runPreflight(options: PreflightOptions = {}): PreflightResult {
   }
 
   checks.push(
+    hasUsableValue(env.PARCEL_TRACKER_AUTH_TOKEN)
+      ? {
+          status: 'ok',
+          title: 'Dashboard authentication',
+          detail: 'PARCEL_TRACKER_AUTH_TOKEN is configured',
+        }
+      : {
+          status: 'fail',
+          title: 'Dashboard authentication',
+          detail: 'PARCEL_TRACKER_AUTH_TOKEN must be set to a long random token',
+        }
+  );
+
+  checks.push(
     hasUsableValue(env.IMAP_HOST)
       ? {
           status: 'ok',
@@ -174,6 +189,15 @@ export function runPreflight(options: PreflightOptions = {}): PreflightResult {
       label: 'IMAP port',
       min: 1,
       max: 65535,
+    })
+  );
+
+  checks.push(
+    checkNumber(env, {
+      key: 'PARCEL_TRACKER_SESSION_TTL_SECONDS',
+      defaultValue: '604800',
+      label: 'Dashboard session lifetime',
+      min: 300,
     })
   );
 

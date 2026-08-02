@@ -2,7 +2,7 @@ import { ParcelClient } from '../client';
 
 // Note: These tests require real Parcel API key
 // Set SKIP_PARCEL_TESTS=true to skip
-const skipTests = process.env.SKIP_PARCEL_TESTS === 'true';
+const skipTests = process.env.SKIP_PARCEL_TESTS === 'true' || !process.env.PARCEL_API_KEY;
 
 (skipTests ? describe.skip : describe)('ParcelClient Integration', () => {
   let client: ParcelClient;

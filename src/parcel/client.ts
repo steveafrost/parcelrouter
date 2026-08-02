@@ -32,22 +32,31 @@ function getCarrierCode(carrier: string): string {
 export class ParcelClient {
   private baseUrl = 'https://api.parcel.app/external';
 
-  constructor(private apiKey: string) {}
+  constructor(private apiKey: string, private timeoutMs: number = 10000) {}
 
   async createPackage(input: ParcelPackageInput): Promise<ParcelPackage> {
-    const response = await fetch(`${this.baseUrl}/add-delivery/`, {
-      method: 'POST',
-      headers: {
-        'api-key': this.apiKey,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        tracking_number: input.trackingNumber,
-        carrier_code: getCarrierCode(input.carrier),
-        description: input.name,
-        send_push_confirmation: false,
-      }),
-    });
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), this.timeoutMs);
+    let response: Response;
+
+    try {
+      response = await fetch(`${this.baseUrl}/add-delivery/`, {
+        method: 'POST',
+        headers: {
+          'api-key': this.apiKey,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          tracking_number: input.trackingNumber,
+          carrier_code: getCarrierCode(input.carrier),
+          description: input.name,
+          send_push_confirmation: false,
+        }),
+        signal: controller.signal,
+      });
+    } finally {
+      clearTimeout(timeout);
+    }
 
     const data = await response.json() as { success: boolean; error_message?: string };
 

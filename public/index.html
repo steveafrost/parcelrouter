@@ -63,6 +63,12 @@
             gap: 24px;
         }
 
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
         .brand {
             display: flex;
             align-items: center;
@@ -350,6 +356,17 @@
             background: var(--cardboard-dark);
             transform: translateY(-1px);
             box-shadow: 0 4px 12px var(--shadow-lg);
+        }
+
+        .logout-btn {
+            background: transparent;
+            color: var(--cardboard-dark);
+            border: 1px solid var(--cardboard);
+            box-shadow: none;
+        }
+
+        .logout-btn:hover {
+            color: var(--paper-white);
         }
 
         .refresh-btn:disabled {
@@ -725,10 +742,13 @@
                         <div class="subtitle">Automated delivery monitoring from iCloud Mail</div>
                     </div>
                 </div>
-                <button class="refresh-btn" id="refreshBtn" onclick="loadPackages()">
-                    <span class="refresh-icon">↻</span>
-                    Refresh
-                </button>
+                <div class="header-actions">
+                    <button class="refresh-btn logout-btn" onclick="logout()" type="button">Sign out</button>
+                    <button class="refresh-btn" id="refreshBtn" onclick="loadPackages()" type="button">
+                        <span class="refresh-icon">↻</span>
+                        Refresh
+                    </button>
+                </div>
             </div>
         </header>
 
@@ -800,6 +820,25 @@
         <script>
         let autoRefreshInterval;
         let parcelSyncEnabled = false;
+        let pendingParcelSyncs = 0;
+        let failedParcelSyncs = 0;
+
+        async function apiFetch(url, options) {
+            const response = await fetch(url, options);
+            if (response.status === 401) {
+                window.location.assign('/login');
+                throw new Error('Dashboard session expired');
+            }
+            return response;
+        }
+
+        async function logout() {
+            try {
+                await fetch('/auth/logout', { method: 'POST' });
+            } finally {
+                window.location.assign('/login');
+            }
+        }
 
         async function checkHealth() {
             try {
@@ -808,6 +847,8 @@
 
                 if (response.ok) {
                     parcelSyncEnabled = Boolean(data.parcelSyncEnabled);
+                    pendingParcelSyncs = Number(data.pendingParcelSyncs || 0);
+                    failedParcelSyncs = Number(data.failedParcelSyncs || 0);
                     const badge = document.getElementById('statusBadge');
                     const dot = document.getElementById('statusDot');
                     const text = document.getElementById('statusText');
@@ -837,7 +878,7 @@
 
         async function loadStats() {
             try {
-                const response = await fetch('/stats');
+                const response = await apiFetch('/stats');
                 if (response.ok) {
                     const stats = await response.json();
                     document.getElementById('emailsRead').textContent = stats.emailsRead || 0;
@@ -850,7 +891,13 @@
 
         function updateParcelSyncDisplay() {
             const syncElement = document.getElementById('parcelSyncStatus');
-            syncElement.textContent = parcelSyncEnabled ? 'On' : 'Local';
+            syncElement.textContent = parcelSyncEnabled
+                ? (failedParcelSyncs > 0
+                    ? `On · ${failedParcelSyncs} failed`
+                    : pendingParcelSyncs > 0
+                        ? `On · ${pendingParcelSyncs} retrying`
+                        : 'On')
+                : 'Local';
 
             const container = document.getElementById('rateLimitContainer');
             if (!parcelSyncEnabled) {
@@ -885,7 +932,7 @@
                 await loadStats();
                 await loadReviewQueue();
 
-                const response = await fetch('/packages');
+                const response = await apiFetch('/packages');
                 if (!response.ok) {
                     throw new Error('Failed to load packages');
                 }
@@ -905,7 +952,7 @@
         }
 
         async function loadReviewQueue() {
-            const response = await fetch('/review');
+            const response = await apiFetch('/review');
             if (!response.ok) {
                 throw new Error('Failed to load review queue');
             }
@@ -1055,7 +1102,7 @@
             btn.textContent = action === 'approve' ? 'Approving...' : 'Ignoring...';
 
             try {
-                const response = await fetch(`/review/${id}/${action}`, {
+                const response = await apiFetch(`/review/${id}/${action}`, {
                     method: 'POST'
                 });
 
@@ -1085,7 +1132,7 @@
             btn.textContent = 'Deleting...';
 
             try {
-                const response = await fetch(`/packages/${id}`, {
+                const response = await apiFetch(`/packages/${id}`, {
                     method: 'DELETE'
                 });
 

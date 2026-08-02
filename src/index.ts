@@ -2,6 +2,7 @@ import dotenv from 'dotenv';
 import { startServer } from './api/server';
 import { createScheduler } from './services/scheduler';
 import { PollerConfig } from './services/email-poller';
+import { closeDb } from './db/connection';
 
 // Load environment variables
 dotenv.config();
@@ -44,13 +45,36 @@ async function main(): Promise<void> {
   const cronMinutes = Math.max(1, Math.floor(pollIntervalSeconds / 60));
   const cronExpression = `*/${cronMinutes} * * * *`;
   
-  createScheduler(config, cronExpression);
+  const scheduler = createScheduler(config, cronExpression);
   console.log(`Scheduler started with ${cronMinutes} minute interval`);
   console.log(process.env.PARCEL_API_KEY ? 'Parcel sync enabled' : 'Parcel sync disabled; packages will stay local');
 
   // Start the API server
   const port = parseInt(process.env.PORT || '3000', 10);
-  startServer(port);
+  const server = startServer(port);
+  let shuttingDown = false;
+
+  const shutdown = async (signal: NodeJS.Signals): Promise<void> => {
+    if (shuttingDown) return;
+    shuttingDown = true;
+    console.log(`Received ${signal}; shutting down gracefully...`);
+
+    try {
+      await scheduler.stop();
+      await new Promise<void>((resolve, reject) => {
+        server.close(error => error ? reject(error) : resolve());
+      });
+      console.log('Shutdown complete');
+    } catch (error) {
+      console.error('Graceful shutdown failed:', error);
+      process.exitCode = 1;
+    } finally {
+      closeDb();
+    }
+  };
+
+  process.once('SIGTERM', () => void shutdown('SIGTERM'));
+  process.once('SIGINT', () => void shutdown('SIGINT'));
 }
 
 main().catch(error => {

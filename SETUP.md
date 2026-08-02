@@ -45,7 +45,7 @@ docker-compose up -d
 open http://localhost:9001
 ```
 
-The dashboard/API requires `PARCEL_TRACKER_AUTH_TOKEN` for every route except `/health`; send it as `Authorization: Bearer <token>` or place the app behind an authenticated local proxy.
+The guided installer generates `PARCEL_TRACKER_AUTH_TOKEN` automatically. Enter that value on the dashboard sign-in screen; ParcelRouter exchanges it for an HttpOnly, same-site session cookie. API clients can still send it as `Authorization: Bearer <token>`.
 
 Or run the guided installer:
 
@@ -120,6 +120,10 @@ WEBHOOK_TIMEOUT_MS=5000
 
 # Optional: Adjust polling interval (default: 3600 seconds = 1 hour)
 # POLL_INTERVAL=1800  # Check every 30 minutes instead
+
+# Required dashboard access token (the guided installer generates this)
+PARCEL_TRACKER_AUTH_TOKEN=replace-with-a-long-random-token
+PARCEL_TRACKER_SESSION_TTL_SECONDS=604800
 ```
 
 ### Step 5: Check Configuration
@@ -131,7 +135,7 @@ npm ci
 npm run setup:check
 ```
 
-The check validates required iCloud IMAP settings, optional Parcel and webhook settings, numeric ports and intervals, and local database writability.
+The check validates required iCloud IMAP and dashboard authentication settings, optional Parcel and webhook settings, numeric ports and intervals, and local database writability.
 
 ### Step 6: Deploy with Docker
 

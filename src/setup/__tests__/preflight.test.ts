@@ -32,6 +32,7 @@ describe('preflight setup checks', () => {
       [
         'IMAP_USER=person@example.com',
         'IMAP_PASS=app-specific-password',
+        'PARCEL_TRACKER_AUTH_TOKEN=local-test-auth-token',
         'POLL_INTERVAL=3600',
         'WEBHOOK_TIMEOUT_MS=5000',
       ].join('\n')
@@ -60,6 +61,7 @@ describe('preflight setup checks', () => {
       env: {
         IMAP_USER: 'person@example.com',
         IMAP_PASS: 'app-specific-password',
+        PARCEL_TRACKER_AUTH_TOKEN: 'local-test-auth-token',
         IMAP_PORT: 'not-a-number',
         WEBHOOK_URL: 'ftp://example.com/hook',
       },
@@ -80,6 +82,7 @@ describe('preflight setup checks', () => {
       env: {
         IMAP_USER: 'person@example.com',
         IMAP_PASS: 'app-specific-password',
+        PARCEL_TRACKER_AUTH_TOKEN: 'local-test-auth-token',
       },
     });
 

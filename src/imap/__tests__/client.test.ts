@@ -2,7 +2,7 @@ import { ImapClient, ImapConfig } from '../client';
 
 // Note: These tests require real IMAP credentials
 // Set SKIP_IMAP_TESTS=true to skip
-const skipTests = process.env.SKIP_IMAP_TESTS === 'true';
+const skipTests = process.env.SKIP_IMAP_TESTS === 'true' || !process.env.IMAP_USER || !process.env.IMAP_PASS;
 
 (skipTests ? describe.skip : describe)('ImapClient Integration', () => {
   let client: ImapClient;

@@ -3,9 +3,9 @@ import { parseEmail } from '../parser/email-parser';
 import { PackageRepository } from '../db/repositories/package-repository';
 import { ReviewRepository } from '../db/repositories/review-repository';
 import { StatsRepository } from '../db/repositories/stats-repository';
-import { ParcelClient } from '../parcel/client';
 import { getDb, initDb } from '../db/connection';
 import { createWebhookDispatcherFromEnv, WebhookDispatcher } from '../webhooks/dispatcher';
+import { ParcelSyncService } from './parcel-sync-service';
 
 export interface FolderConfig {
   name: string;
@@ -20,9 +20,14 @@ export interface PollerConfig {
   webhookDispatcher?: WebhookDispatcher;
 }
 
+interface StoredImapCursor {
+  uidValidity: string;
+  lastUid: number;
+}
+
 export class EmailPoller {
   private imapClient: ImapClient;
-  private parcelClient: ParcelClient | null;
+  private parcelSyncService: ParcelSyncService;
   private packageRepo: PackageRepository;
   private reviewRepo: ReviewRepository;
   private statsRepo: StatsRepository;
@@ -30,7 +35,6 @@ export class EmailPoller {
 
   constructor(private config: PollerConfig) {
     this.imapClient = new ImapClient(config.imap);
-    this.parcelClient = config.parcelApiKey ? new ParcelClient(config.parcelApiKey) : null;
     this.webhookDispatcher = config.webhookDispatcher || createWebhookDispatcherFromEnv();
     
     // Initialize database
@@ -38,6 +42,7 @@ export class EmailPoller {
     this.packageRepo = new PackageRepository(db);
     this.reviewRepo = new ReviewRepository(db);
     this.statsRepo = new StatsRepository(db);
+    this.parcelSyncService = new ParcelSyncService(db, config.parcelApiKey);
   }
 
   async poll(): Promise<number> {
@@ -47,6 +52,8 @@ export class EmailPoller {
     let totalProcessed = 0;
 
     try {
+      await this.retryParcelSyncs();
+
       // Connect to IMAP
       await this.imapClient.connect();
 
@@ -73,7 +80,7 @@ export class EmailPoller {
     console.log(`Polling folder: ${folder.name}`);
 
     // Open the folder
-    await this.imapClient.openFolder(folder.name);
+    const mailbox = await this.imapClient.openFolder(folder.name);
 
     // Get last poll time for this folder
     const lastPoll = this.getLastPollTime(folder.name);
@@ -87,14 +94,26 @@ export class EmailPoller {
     
     console.log(`Fetching emails from ${folder.name} since ${sinceDate.toISOString()}`);
 
-    // Fetch emails since last poll
-    const emails = await this.imapClient.fetchEmails(sinceDate);
+    const cursor = this.getImapCursor(folder.name);
+    const cursorMatchesMailbox = cursor?.uidValidity === mailbox.uidValidity;
+    const uidRange = cursorMatchesMailbox
+      ? { start: cursor.lastUid + 1, end: mailbox.maxUid }
+      : undefined;
+
+    if (cursor && !cursorMatchesMailbox) {
+      console.warn(`UIDVALIDITY changed for ${folder.name}; rebuilding its IMAP cursor from the date watermark`);
+    }
+
+    // UID ranges make steady-state polling deterministic. The date watermark is
+    // retained only for the first poll or after a mailbox UIDVALIDITY reset.
+    const emails = await this.imapClient.fetchEmails(sinceDate, uidRange);
     console.log(`Found ${emails.length} emails in ${folder.name} to process`);
 
     // Track total emails read
     this.statsRepo.incrementEmailsRead(emails.length);
 
     let processedCount = 0;
+    let hadProcessingErrors = false;
 
     for (const email of emails) {
       try {
@@ -152,15 +171,19 @@ export class EmailPoller {
         }
 
         // Save to database
-        const pkg = this.packageRepo.create({
-          trackingNumber: trackingInfo.trackingNumber,
-          carrier: trackingInfo.carrier,
-          retailer: trackingInfo.retailer || undefined,
-          productName: trackingInfo.productName,
-          orderNumber: trackingInfo.orderNumber || undefined,
-          emailMessageId: trackingInfo.messageId,
-          confidence: trackingInfo.confidence,
-        });
+        const pkg = getDb().transaction(() => {
+          const created = this.packageRepo.create({
+            trackingNumber: trackingInfo.trackingNumber,
+            carrier: trackingInfo.carrier,
+            retailer: trackingInfo.retailer || undefined,
+            productName: trackingInfo.productName,
+            orderNumber: trackingInfo.orderNumber || undefined,
+            emailMessageId: trackingInfo.messageId,
+            confidence: trackingInfo.confidence,
+          });
+          this.statsRepo.incrementPackagesCreated();
+          return created;
+        })();
 
         console.log(`Created package: ${pkg.id} for tracking ${pkg.trackingNumber}`);
         await this.webhookDispatcher.dispatch('package.created', {
@@ -172,43 +195,40 @@ export class EmailPoller {
           },
         });
 
-        // Submit to Parcel API when sync is configured.
-        if (this.parcelClient) {
-          try {
-            await this.parcelClient.createPackage({
-              trackingNumber: trackingInfo.trackingNumber,
-              carrier: trackingInfo.carrier,
-              name: trackingInfo.productName,
-            });
-
-            console.log(`Submitted to Parcel: ${trackingInfo.trackingNumber}`);
-            await this.webhookDispatcher.dispatch('parcel.synced', {
-              package: pkg,
-            });
-          } catch (parcelError) {
-            console.error(`Failed to submit to Parcel: ${parcelError}`);
-            await this.webhookDispatcher.dispatch('parcel.sync_failed', {
-              package: pkg,
-              error: String(parcelError),
-            });
-            // Continue - package is saved in DB and can be retried later
-          }
+        // Submit to Parcel API when sync is configured. Failures are persisted
+        // and retried on future poll cycles.
+        const syncResult = await this.parcelSyncService.syncPackage(pkg);
+        if (syncResult.status === 'synced') {
+          console.log(`Submitted to Parcel: ${trackingInfo.trackingNumber}`);
+          await this.webhookDispatcher.dispatch('parcel.synced', {
+            package: syncResult.package,
+          });
+        } else if (syncResult.status === 'queued') {
+          console.error(`Failed to submit to Parcel; retry queued: ${syncResult.error}`);
+          await this.webhookDispatcher.dispatch('parcel.sync_failed', {
+            package: pkg,
+            error: syncResult.error,
+            retryQueued: true,
+          });
         } else {
           console.log(`Parcel sync disabled; saved ${trackingInfo.trackingNumber} locally`);
         }
 
         processedCount++;
 
-        // Track package created
-        this.statsRepo.incrementPackagesCreated();
       } catch (emailError) {
         console.error(`Error processing email ${email.messageId}: ${emailError}`);
+        hadProcessingErrors = true;
         // Continue with next email
       }
     }
 
-    // Update last poll time for this folder
-    this.updateLastPollTime(folder.name);
+    if (hadProcessingErrors) {
+      console.warn(`Not advancing the IMAP cursor for ${folder.name}; failed messages will be retried`);
+    } else {
+      this.updateImapCursor(folder.name, mailbox.uidValidity, mailbox.maxUid);
+      this.updateLastPollTime(folder.name);
+    }
 
     console.log(`Folder ${folder.name} complete. Processed ${processedCount} new packages.`);
     return processedCount;
@@ -229,6 +249,45 @@ export class EmailPoller {
     db.prepare(
       'INSERT INTO last_poll (folder, timestamp) VALUES (?, ?) ON CONFLICT(folder) DO UPDATE SET timestamp = excluded.timestamp'
     ).run(folder, new Date().toISOString());
+  }
+
+  private getImapCursor(folder: string): StoredImapCursor | undefined {
+    const row = getDb().prepare(
+      'SELECT uid_validity, last_uid FROM imap_cursors WHERE folder = ?'
+    ).get(folder) as { uid_validity: string; last_uid: number } | undefined;
+
+    return row ? { uidValidity: row.uid_validity, lastUid: row.last_uid } : undefined;
+  }
+
+  private updateImapCursor(folder: string, uidValidity: string, lastUid: number): void {
+    getDb().prepare(`
+      INSERT INTO imap_cursors (folder, uid_validity, last_uid, updated_at)
+      VALUES (?, ?, ?, ?)
+      ON CONFLICT(folder) DO UPDATE SET
+        uid_validity = excluded.uid_validity,
+        last_uid = excluded.last_uid,
+        updated_at = excluded.updated_at
+    `).run(folder, uidValidity, lastUid, new Date().toISOString());
+  }
+
+  private async retryParcelSyncs(): Promise<void> {
+    const results = await this.parcelSyncService.retryDue();
+    for (const result of results) {
+      if (result.status === 'synced') {
+        console.log(`Retried Parcel sync successfully: ${result.package.trackingNumber}`);
+        await this.webhookDispatcher.dispatch('parcel.synced', {
+          package: result.package,
+          retry: true,
+        });
+      } else if (result.status === 'queued') {
+        console.error(`Parcel retry failed and was rescheduled: ${result.error}`);
+        await this.webhookDispatcher.dispatch('parcel.sync_failed', {
+          package: result.package,
+          error: result.error,
+          retryQueued: true,
+        });
+      }
+    }
   }
 }
 
