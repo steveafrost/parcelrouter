@@ -67,10 +67,21 @@ export class ImapClient {
         fromName: fromAddress?.name || undefined,
         subject: message.envelope?.subject || '',
         body: message.source?.toString('utf8') || '',
-        date: message.envelope?.date || new Date(),
+        date: envelopeDate(message.envelope?.date),
       });
     }
 
     return emails;
   }
+}
+
+// imapflow 2 types envelope.date as string | Date; servers that report an
+// unparsable INTERNALDATE leave it a string.
+function envelopeDate(value: string | Date | undefined): Date {
+  if (value instanceof Date) {
+    return value;
+  }
+
+  const parsed = value ? new Date(value) : null;
+  return parsed && !Number.isNaN(parsed.getTime()) ? parsed : new Date();
 }
