@@ -225,9 +225,10 @@ export function createServer(): express.Express {
   // Serve static files from public directory (disable index to let our route handle /)
   app.use(express.static(publicPath, { index: false }));
 
-  // Debug: log all registered routes
+  // Debug: log all registered routes. Express 5 removed the deprecated
+  // app._router; use app.router instead (same Router with .stack).
   console.log('Registered routes:');
-  app._router.stack.forEach((r: any) => {
+  app.router.stack.forEach((r: any) => {
     if (r.route && r.route.path) {
       console.log(`  ${Object.keys(r.route.methods).join(',').toUpperCase()} ${r.route.path}`);
     }
